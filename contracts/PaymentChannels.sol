@@ -281,6 +281,8 @@ contract PaymentChannels is ECVerify, StandardToken {
       channelIsFunded(_channelId)
     {
         channels[_channelId].funded = false;
+        channels[_channelId].balance0 = 0;
+        channels[_channelId].balance1 = 0;
         channels[_channelId].totalBalance = 0;
 
         incrementBalance(channels[_channelId].address0, channels[_channelId].balance0);
