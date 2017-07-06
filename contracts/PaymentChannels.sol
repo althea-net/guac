@@ -1,5 +1,5 @@
 pragma solidity ^0.4.11;
-import "ECVerify.sol";
+import "./ECVerify.sol";
 import './zeppelin/token/StandardToken.sol';
 
 
@@ -247,52 +247,51 @@ contract PaymentChannels is ECVerify, StandardToken {
         incrementBalance(channels[_channelId].address0, balance0);
         incrementBalance(channels[_channelId].address1, balance1);
     }
-}
 
-function getHashlockAdjustment (
-    bytes _hashlocks
-) 
-    internal
-    returns (int256 totalAdjustment)
-{
-    require(_hashlocks.length % 64 == 0)
+    function getHashlockAdjustment (
+        bytes _hashlocks
+    ) 
+        internal
+        returns (int256 totalAdjustment)
+    {
+        require(_hashlocks.length % 64 == 0)
 
-    bytes32 hashed;
-    int256 adjustment;
+        bytes32 hashed;
+        int256 adjustment;
 
-    for (uint256 i = 0; i <= _hashlocks.length; i += 64) {
-        assembly {
-            hashed := mload(add(_hashlocks, index + 32))
-            adjustment := mload(add(_hashlocks, index + 64))
+        for (uint256 i = 0; i <= _hashlocks.length; i += 64) {
+            assembly {
+                hashed := mload(add(_hashlocks, index + 32))
+                adjustment := mload(add(_hashlocks, index + 64))
+            }
+
+            if (seenPreimage[hashed]) {
+                totalAdjustment += adjustment;
+            }
+        }
+    }
+
+    function applyHashlockAdjustment (
+        uint256 _currentBalance0,
+        uint256 _currentBalance1,
+        int256 _totalAdjustment
+    )
+        internal
+        returns (uint256 balance0, uint256 balance1)
+    {
+        uint256 balance0 = _currentBalance0 + _totalAdjustment;
+        uint256 balance1 = _currentBalance1 - _totalAdjustment;
+
+        if (_totalAdjustment > 0) {
+            assert(balance0 > _currentBalance0);
+            assert(balance1 < _currentBalance1);
         }
 
-        if (seenPreimage[hashed]) {
-            totalAdjustment += adjustment;
+        if (_totalAdjustment < 0){
+            assert(balance0 < _currentBalance0);
+            assert(balance1 > _currentBalance1);
         }
+
+        assert(balance0 + balance1 == channels[_channelId].totalBalance)
     }
 }
-
-function applyHashlockAdjustment (
-    uint256 _currentBalance0,
-    uint256 _currentBalance1,
-    int256 _totalAdjustment
-)
-    internal
-    returns (uint256 balance0, uint256 balance1)
-{
-    uint256 balance0 = _currentBalance0 + _totalAdjustment;
-    uint256 balance1 = _currentBalance1 - _totalAdjustment;
-
-    if (_totalAdjustment > 0) {
-        assert(balance0 > _currentBalance0);
-        assert(balance1 < _currentBalance1);
-    }
-
-    if (_totalAdjustment < 0){
-        assert(balance0 < _currentBalance0);
-        assert(balance1 > _currentBalance1);
-    }
-
-    assert(balance0 + balance1 == channels[_channelId].totalBalance)
-}
-
