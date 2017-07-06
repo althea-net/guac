@@ -5,6 +5,7 @@ import './zeppelin/token/StandardToken.sol';
 
 contract PaymentChannels is ECVerify, StandardToken {
     mapping (bytes32 => Channel) channels;
+    mapping (bytes32 => bool) seenPreimage;
 
     modifier channelDoesNotExist (bytes32 _channelId) {
         require(channels[_channelId].channelId != _channelId);
@@ -16,19 +17,19 @@ contract PaymentChannels is ECVerify, StandardToken {
         _;
     }
 
-    modifier channelIsOpen (bytes32 _channelId) {
-        require(channels[_channelId].open);
+    modifier channelIsNotEnded (bytes32 _channelId) {
+        require(channels[_channelId].ended);
         _;
     }
 
-    modifier channelIsFunded (bytes32 _channelId) {
+    modifier channelIsNotClosed (bytes32 _channelId) {
         require(channels[_channelId].funded);
         _;
     }
 
     modifier channelIsSettled (bytes32 _channelId) {
         require(
-            !channels[_channelId].open &&
+            channels[_channelId].ended &&
             block.number >= channels[_channelId].settlingBlock
         );
         _;
@@ -36,7 +37,7 @@ contract PaymentChannels is ECVerify, StandardToken {
 
     modifier channelIsNotSettled (bytes32 _channelId) {
         require(
-            channels[_channelId].open ||
+            !channels[_channelId].ended ||
             block.number < channels[_channelId].settlingBlock
         );
         _;
@@ -88,7 +89,7 @@ contract PaymentChannels is ECVerify, StandardToken {
         address address0;
         address address1;
 
-        bool open;
+        bool ended;
         bool funded;
         uint256 settlingPeriod;
         uint256 settlingBlock;
@@ -96,31 +97,9 @@ contract PaymentChannels is ECVerify, StandardToken {
         uint256 balance0;
         uint256 balance1;
 
+        Hashlock[] hashlocks;
+
         uint256 sequenceNumber;
-    }
-
-    function getChannel(bytes32 _channelId) returns(
-        address address0,
-        address address1,
-
-        bool open,
-        bool funded,
-        uint settlingPeriod,
-        uint settlingBlock,
-
-        uint256 balance0,
-        uint256 balance1,
-        uint256 totalBalance,
-
-        uint sequenceNumber
-    ) {
-        address0 = channels[_channelId].address0;
-        address1 = channels[_channelId].address1;
-        open = channels[_channelId].open;
-        settlingPeriod = channels[_channelId].settlingPeriod;
-        settlingBlock = channels[_channelId].settlingBlock;
-        state = channels[_channelId].state;
-        sequenceNumber = channels[_channelId].sequenceNumber;
     }
 
     function newChannel(
@@ -168,7 +147,7 @@ contract PaymentChannels is ECVerify, StandardToken {
             _address0,       // address address0;
             _address1,       // address address1;
             
-            true,            // bool open;
+            true,            // bool ended;
             true,            // bool funded;
             _settlingPeriod, // uint16 settlingPeriod;
             0,               // uint16 settlingBlock;
@@ -183,26 +162,30 @@ contract PaymentChannels is ECVerify, StandardToken {
         channels[_channelId] = channel;
     }
 
-    function updateBalances(
+    function updateState(
         bytes32 _channelId,
         uint256 _sequenceNumber,
 
         uint256 _balance0,
         uint256 _balance1,
 
+        bytes _hashlocks,
+
         bytes _signature0,
         bytes _signature1
-    ) channelExists(_channelId)
-      channelIsNotSettled(_channelId)
-      sequenceNumberIsHighest(_channelId, _sequenceNumber)
-      balancesEqualTotal(_channelId, _balance0, _balance1)
+    )
+        channelExists(_channelId)
+        channelIsNotSettled(_channelId)
+        sequenceNumberIsHighest(_channelId, _sequenceNumber)
+        balancesEqualTotal(_channelId, _balance0, _balance1)
     {
         bytes32 fingerprint = sha3(
-            "updateBalances",
+            "updateState",
             _channelId,
             _sequenceNumber,
             _balance0,
-            _balance1
+            _balance1,
+            _hashlocks
         );
 
         signedByBoth(
@@ -212,80 +195,104 @@ contract PaymentChannels is ECVerify, StandardToken {
             _channelId
         );
 
+        channels[_channelId].sequenceNumber = _sequenceNumber;
         channels[_channelId].balance0 = _balance0;
         channels[_channelId].balance1 = _balance1;
-        channels[_channelId].sequenceNumber = _sequenceNumber;
+        channels[_channelId].hashlocks = _hashlocks;
     }
 
-    function updateBalancesHashlock(
-        bytes32 _channelId,
-        uint256 _sequenceNumber,
-
-        uint256 _balance0,
-        uint256 _balance1,
-
+    function submitPreimage (
         bytes32 _hashed,
-        bytes _preimage,
-
-        bytes _signature0,
-        bytes _signature1
-    ) channelExists(_channelId)
-      channelIsNotSettled(_channelId)
-      sequenceNumberIsHighest(_channelId, _sequenceNumber)
-      balancesEqualTotal(_channelId, _balance0, _balance1)
-    {
-        bytes32 fingerprint = sha3(
-            "updateBalancesHashlock",
-            _channelId,
-            _sequenceNumber,
-            _hashed,
-            _balance0,
-            _balance1
-        );
-
-        signedByBoth(
-            fingerprint,
-            _signature0,
-            _signature,
-            _channelId
-        );
-
-        require(sha3(_preimage) == _hashed);
-
-        channels[_channelId].balance0 = _balance0;
-        channels[_channelId].balance1 = _balance1;
-        channels[_channelId].sequenceNumber = _sequenceNumber;
+        bytes32 _preimage
+    ) {
+        require(_hashed == sha3(_preimage));
+        seenPreimage[_hashed] = true;
     }
 
-    function closeChannel (
+    function end (
         bytes32 _channelId,
         bytes _signature
-    ) channelExists(_channelId)
-      channelIsOpen(_channelId)
+    )
+        channelExists(_channelId)
+        channelIsNotEnded(_channelId)
     {
         bytes32 fingerprint = sha3(
-            "closeChannel",
+            "endChannel",
             _channelId
         );
 
         signedByOne(fingerprint, _signature, _channelId);
 
-        channels[_channelId].open = false;
-        channels[_channelId].settlingBlock = block.number + channels[channelId].settlingPeriod;
+        channels[_channelId].ended = true;
+        channels[_channelId].settlingBlock = block.number  + channels[_channelId].settlingPeriod;
     }
 
-    function withdraw(
+    function close (
         bytes32 _channelId
-    ) channelExists(_channelId)
-      channelIsSettled(_channelId)
-      channelIsFunded(_channelId)
+    )
+        channelExists(_channelId)
+        channelIsSettled(_channelId)
+        channelIsNotClosed(_channelId)
     {
-        channels[_channelId].funded = false;
-        channels[_channelId].balance0 = 0;
-        channels[_channelId].balance1 = 0;
-        channels[_channelId].totalBalance = 0;
+        channels[_channelId].closed = true;
 
-        incrementBalance(channels[_channelId].address0, channels[_channelId].balance0);
-        incrementBalance(channels[_channelId].address1, channels[_channelId].balance1);
+        adjustment = getHashlockAdjustment(channels[_channelId].hashlocks)
+
+        (balance0, balance1) = applyHashlockAdjustment(
+            channels[_channelId].balance0,
+            channels[_channelId].balance1,
+            adjustment
+        );
+
+        incrementBalance(channels[_channelId].address0, balance0);
+        incrementBalance(channels[_channelId].address1, balance1);
     }
 }
+
+function getHashlockAdjustment (
+    bytes _hashlocks
+) 
+    internal
+    returns (int256 totalAdjustment)
+{
+    require(_hashlocks.length % 64 == 0)
+
+    bytes32 hashed;
+    int256 adjustment;
+
+    for (uint256 i = 0; i <= _hashlocks.length; i += 64) {
+        assembly {
+            hashed := mload(add(_hashlocks, index + 32))
+            adjustment := mload(add(_hashlocks, index + 64))
+        }
+
+        if (seenPreimage[hashed]) {
+            totalAdjustment += adjustment;
+        }
+    }
+}
+
+function applyHashlockAdjustment (
+    uint256 _currentBalance0,
+    uint256 _currentBalance1,
+    int256 _totalAdjustment
+)
+    internal
+    returns (uint256 balance0, uint256 balance1)
+{
+    uint256 balance0 = _currentBalance0 + _totalAdjustment;
+    uint256 balance1 = _currentBalance1 - _totalAdjustment;
+
+    if (_totalAdjustment > 0) {
+        assert(balance0 > _currentBalance0);
+        assert(balance1 < _currentBalance1);
+    }
+
+    if (_totalAdjustment < 0){
+        assert(balance0 < _currentBalance0);
+        assert(balance1 > _currentBalance1);
+    }
+
+    assert(balance0 + balance1 == channels[_channelId].totalBalance)
+}
+
