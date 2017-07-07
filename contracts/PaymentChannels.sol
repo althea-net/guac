@@ -1,6 +1,6 @@
 pragma solidity ^0.4.11;
 import "./ECVerify.sol";
-import './zeppelin/token/StandardToken.sol';
+import "zeppelin-solidity/contracts/token/StandardToken.sol";
 
 
 contract PaymentChannels is ECVerify, StandardToken {
@@ -23,7 +23,7 @@ contract PaymentChannels is ECVerify, StandardToken {
     }
 
     modifier channelIsNotClosed (bytes32 _channelId) {
-        require(channels[_channelId].funded);
+        require(!channels[_channelId].closed);
         _;
     }
 
@@ -43,20 +43,18 @@ contract PaymentChannels is ECVerify, StandardToken {
         _;
     }
 
-    modifier balancesEqualTotal (bytes32 _channelId, uint256 _balance0, uint256 _balance1) {
+    function balancesEqualTotal (bytes32 _channelId, uint256 _balance0, uint256 _balance1) {
         require(_balance0.add(_balance1) == channels[_channelId].totalBalance);
-        _;
     }
 
-    modifier sequenceNumberIsHighest (bytes32 _channelId) {
-        require(sequenceNumber > channels[_channelId].sequenceNumber);
-        _;
+    function sequenceNumberIsHighest (bytes32 _channelId, uint256 _sequenceNumber) {
+        require(_sequenceNumber > channels[_channelId].sequenceNumber);
     }
 
     function signedByBoth (
         bytes32 _fingerprint, 
-        bytes32 _signature0, 
-        bytes32 _signature1, 
+        bytes _signature0, 
+        bytes _signature1, 
         bytes32 _channelId
     ) {
         require(
@@ -67,7 +65,7 @@ contract PaymentChannels is ECVerify, StandardToken {
 
     function signedByOne (
         bytes32 _fingerprint,
-        bytes32 _signature,
+        bytes _signature,
         bytes32 _channelId
     ) {
         require(
@@ -90,14 +88,15 @@ contract PaymentChannels is ECVerify, StandardToken {
         address address1;
 
         bool ended;
-        bool funded;
+        bool closed;
         uint256 settlingPeriod;
         uint256 settlingBlock;
 
         uint256 balance0;
         uint256 balance1;
+        uint256 totalBalance;
 
-        Hashlock[] hashlocks;
+        bytes hashlocks;
 
         uint256 sequenceNumber;
     }
@@ -148,13 +147,15 @@ contract PaymentChannels is ECVerify, StandardToken {
             _address1,       // address address1;
             
             true,            // bool ended;
-            true,            // bool funded;
+            false,           // bool closed;
             _settlingPeriod, // uint16 settlingPeriod;
             0,               // uint16 settlingBlock;
 
             _balance0,       // uint256 balance0;
             _balance1,       // uint256 balance1;
             totalBalance,    // uint256 totalBalance;
+
+            new bytes(0),    // bytes hashlocks
 
             0                // uint16 sequenceNumber;
         );
@@ -176,9 +177,10 @@ contract PaymentChannels is ECVerify, StandardToken {
     )
         channelExists(_channelId)
         channelIsNotSettled(_channelId)
-        sequenceNumberIsHighest(_channelId, _sequenceNumber)
-        balancesEqualTotal(_channelId, _balance0, _balance1)
     {
+        sequenceNumberIsHighest(_channelId, _sequenceNumber);
+        balancesEqualTotal(_channelId, _balance0, _balance1);
+
         bytes32 fingerprint = sha3(
             "updateState",
             _channelId,
@@ -191,7 +193,7 @@ contract PaymentChannels is ECVerify, StandardToken {
         signedByBoth(
             fingerprint,
             _signature0,
-            _signature,
+            _signature1,
             _channelId
         );
 
@@ -234,11 +236,15 @@ contract PaymentChannels is ECVerify, StandardToken {
         channelIsSettled(_channelId)
         channelIsNotClosed(_channelId)
     {
+        uint256 balance0;
+        uint256 balance1;
+
         channels[_channelId].closed = true;
 
-        adjustment = getHashlockAdjustment(channels[_channelId].hashlocks)
+        int256 adjustment = getHashlockAdjustment(channels[_channelId].hashlocks);
 
         (balance0, balance1) = applyHashlockAdjustment(
+            _channelId,
             channels[_channelId].balance0,
             channels[_channelId].balance1,
             adjustment
@@ -254,15 +260,18 @@ contract PaymentChannels is ECVerify, StandardToken {
         internal
         returns (int256 totalAdjustment)
     {
-        require(_hashlocks.length % 64 == 0)
+        require(_hashlocks.length % 64 == 0);
 
         bytes32 hashed;
         int256 adjustment;
 
         for (uint256 i = 0; i <= _hashlocks.length; i += 64) {
+            uint256 hashedOffset = i + 32;
+            uint256 adjustmentOffset = i + 64;
+
             assembly {
-                hashed := mload(add(_hashlocks, index + 32))
-                adjustment := mload(add(_hashlocks, index + 64))
+                hashed := mload(add(_hashlocks, hashedOffset))
+                adjustment := mload(add(_hashlocks, adjustmentOffset))
             }
 
             if (seenPreimage[hashed]) {
@@ -272,6 +281,7 @@ contract PaymentChannels is ECVerify, StandardToken {
     }
 
     function applyHashlockAdjustment (
+        bytes32 _channelId,
         uint256 _currentBalance0,
         uint256 _currentBalance1,
         int256 _totalAdjustment
@@ -279,19 +289,18 @@ contract PaymentChannels is ECVerify, StandardToken {
         internal
         returns (uint256 balance0, uint256 balance1)
     {
-        uint256 balance0 = _currentBalance0 + _totalAdjustment;
-        uint256 balance1 = _currentBalance1 - _totalAdjustment;
+        uint256 uintTotalAdjustment = uint256(_totalAdjustment);
 
         if (_totalAdjustment > 0) {
-            assert(balance0 > _currentBalance0);
-            assert(balance1 < _currentBalance1);
+            balance0 = _currentBalance0.add(uintTotalAdjustment);
+            balance1 = _currentBalance1.sub(uintTotalAdjustment);
         }
 
-        if (_totalAdjustment < 0){
-            assert(balance0 < _currentBalance0);
-            assert(balance1 > _currentBalance1);
+        if (_totalAdjustment < 0) {
+            balance0 = _currentBalance0.sub(uintTotalAdjustment);
+            balance1 = _currentBalance1.add(uintTotalAdjustment);
         }
 
-        assert(balance0 + balance1 == channels[_channelId].totalBalance)
+        assert(balance0.add(balance1) == channels[_channelId].totalBalance);
     }
 }
