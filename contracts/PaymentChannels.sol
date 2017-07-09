@@ -1,9 +1,14 @@
 pragma solidity ^0.4.11;
 import "./ECVerify.sol";
-import "zeppelin-solidity/contracts/token/StandardToken.sol";
+import "zeppelin-solidity/contracts/token/MintableToken.sol";
 
 
-contract PaymentChannels is ECVerify, StandardToken {
+contract PaymentChannels is ECVerify, MintableToken {
+    event LogString(string label, string message);
+    event LogBytes(string label, bytes message);
+    event LogBytes32(string label, bytes32 message);
+    event LogNum256(uint256 num);
+
     mapping (bytes32 => Channel) channels;
     mapping (bytes32 => bool) seenPreimage;
 
@@ -74,11 +79,11 @@ contract PaymentChannels is ECVerify, StandardToken {
         );
     }
 
-    function incrementBalance(address _addr, uint _value) {
+    function incrementBalance(address _addr, uint _value) internal {
         balances[_addr] = balances[_addr].add(_value);
     }
 
-    function decrementBalance(address _addr, uint _value) {
+    function decrementBalance(address _addr, uint _value) internal {
         balances[_addr] = balances[_addr].sub(_value);
     }
 
@@ -207,8 +212,19 @@ contract PaymentChannels is ECVerify, StandardToken {
         bytes32 _hashed,
         bytes32 _preimage
     ) {
+        // LogBytes32("hashed", _hashed);
+        // LogBytes32("preimage", sha3(_preimage));
         require(_hashed == sha3(_preimage));
         seenPreimage[_hashed] = true;
+    }
+
+    function doesNotThrow () {
+        LogString("derping", "derpington");
+        //
+    }
+
+    function doesThrow () {
+        throw;
     }
 
     function end (

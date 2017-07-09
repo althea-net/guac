@@ -29,6 +29,15 @@ contract MetaCoin {
 	}
 
 	function getBalance(address addr) returns(uint) {
+		require(true == true);
 		return balances[addr];
+	}
+
+	function doesNotThrow () {
+		//
+	}
+
+	function doesThrow () {
+		throw;
 	}
 }
