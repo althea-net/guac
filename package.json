@@ -12,12 +12,15 @@
   "devDependencies": {
     "blue-tape": "^1.0.0",
     "eslint": "^4.1.1",
+    "ethereumjs-testrpc": "^4.0.1",
+    "ethereumjs-util": "^5.1.2",
     "left-pad": "^1.1.3",
     "truffle": "^3.4.3"
   },
   "scripts": {
     "test": "truffle test",
-    "migrate": "truffle migrate --reset"
+    "migrate": "truffle migrate --reset",
+    "testrpc": "testrpc -m 'cook mango twist then skin sort option civil have still rather guilt'"
   },
   "repository": {
     "type": "git",
