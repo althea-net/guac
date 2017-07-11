@@ -8,7 +8,7 @@ contract PaymentChannels is ECVerify, MintableToken {
     event LogBytes(string label, bytes message);
     event LogBytes32(string label, bytes32 message);
     event LogAddresses(string label, address addr0, address addr1);
-    event LogNum256(uint256 num);
+    event LogUint256(string label, uint256 num);
     event LogBool(string label, bool message);
 
     event NewChannel(bytes32 channelId);
@@ -40,6 +40,10 @@ contract PaymentChannels is ECVerify, MintableToken {
     }
 
     function channelIsNotSettled (bytes32 _channelId) {
+        // LogBool("channels[_channelId].ended", channels[_channelId].ended);
+        // LogBool("block.number < channels[_channelId].challengeBlock", block.number < channels[_channelId].challengeBlock);
+        // LogBool("!channels[_channelId].ended || block.number < channels[_channelId].challengeBlock", !channels[_channelId].ended || block.number < channels[_channelId].challengeBlock);
+        
         require(
             !channels[_channelId].ended ||
             block.number < channels[_channelId].challengeBlock
@@ -150,10 +154,10 @@ contract PaymentChannels is ECVerify, MintableToken {
             _address0,                   // address address0;
             _address1,                   // address address1;
             
-            true,                        // bool ended;
+            false,                       // bool ended;
             false,                       // bool closed;
-            _challengePeriod,            // uint16 challengePeriod;
-            0,                           // uint16 challengeBlock;
+            _challengePeriod,            // uint256 challengePeriod;
+            0,                           // uint256 challengeBlock;
 
             _balance0,                   // uint256 balance0;
             _balance1,                   // uint256 balance1;
@@ -161,7 +165,7 @@ contract PaymentChannels is ECVerify, MintableToken {
 
             new bytes(0),                // bytes hashlocks
 
-            0                            // uint16 sequenceNumber;
+            0                            // uint256 sequenceNumber;
         );
 
         NewChannel(_channelId);

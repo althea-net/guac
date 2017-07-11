@@ -59,6 +59,22 @@ module.exports = async (test, instance) => {
       signature1
     )
 
+    t.deepEqual(
+      JSON.parse(JSON.stringify(await instance.channels(channelId))),
+      [ '0x1000000000000000000000000000000000000000000000000000000000000000',
+        
+        '0xa09bd41a9f1d469fca7b3f82a579b855dd6b279d',
+        '0x25e27882eeb2159ad3164ed2622241740dfe0528',
+        
+        false, false,
+        
+        '2', '0',
+        
+        '5', '7', '12',
+        
+        '0x', '1' ]
+    )
+
     const logs = await p(eventLog.get.bind(eventLog))()
     console.log('logs', filterLogs(logs))
     eventLog.stopWatching()
@@ -68,7 +84,6 @@ module.exports = async (test, instance) => {
 }
 
 async function createChannel (instance) {
-  console.log('createChannel start')
   await instance.mint(ACCT_0_ADDR, 12)
   await instance.mint(ACCT_1_ADDR, 12)
     
@@ -112,5 +127,4 @@ async function createChannel (instance) {
     signature0,
     signature1
   )
-  console.log('createChannel end')
 }

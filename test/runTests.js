@@ -8,5 +8,5 @@ const PaymentChannels = artifacts.require('PaymentChannels')
 ;(async () => {
   const instance = await PaymentChannels.deployed()
   newChannel(test, instance)
-  // updateState(test, instance)
+  updateState(test, instance)
 })()

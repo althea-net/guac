@@ -77,7 +77,7 @@ module.exports = async (test, instance) => {
         '0xa09bd41a9f1d469fca7b3f82a579b855dd6b279d',
         '0x25e27882eeb2159ad3164ed2622241740dfe0528',
         
-        true, false,
+        false, false,
         
         '2', '0',
         
