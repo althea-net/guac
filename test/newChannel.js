@@ -3,11 +3,11 @@
 const test = require('blue-tape')
 const p = require('util').promisify
 
-const PaymentChannels = artifacts.require('PaymentChannels');
-
 const {
   ACCT_0_PRIVKEY,
-  ACCT_1_PRIVKEY
+  ACCT_1_PRIVKEY,
+  ACCT_0_ADDR,
+  ACCT_1_ADDR
 } = require('./constants.js')
 
 const {
@@ -18,21 +18,18 @@ const {
   sign
 } = require('./utils.js')
 
-test('PaymentChannels', async () => {
-  const accounts = await p(web3.eth.getAccounts)()
-  const instance = await PaymentChannels.deployed()
-
+module.exports = async (test, instance) => {
   test('newChannel happy path', async t => {
     const snapshot = await takeSnapshot()
     const eventLog = instance.allEvents()
 
-    await instance.mint(accounts[0], 12)
-    await instance.mint(accounts[1], 12)
+    await instance.mint(ACCT_0_ADDR, 12)
+    await instance.mint(ACCT_1_ADDR, 12)
       
     const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
 
-    const address0 = accounts[0]
-    const address1 = accounts[1]
+    const address0 = ACCT_0_ADDR
+    const address1 = ACCT_1_ADDR
 
     const balance0 = 6
     const balance1 = 6
@@ -70,8 +67,8 @@ test('PaymentChannels', async () => {
       signature1
     )
 
-    t.equal((await instance.balanceOf(accounts[0])).c[0], 6)
-    t.equal((await instance.balanceOf(accounts[0])).c[0], 6)
+    t.equal((await instance.balanceOf(ACCT_0_ADDR)).c[0], 6)
+    t.equal((await instance.balanceOf(ACCT_0_ADDR)).c[0], 6)
 
     t.deepEqual(
       JSON.parse(JSON.stringify(await instance.channels(channelId))),
@@ -99,13 +96,13 @@ test('PaymentChannels', async () => {
   test('newChannel bad sig', async t => {
     const snapshot = await takeSnapshot()
 
-    await instance.mint(accounts[0], 12)
-    await instance.mint(accounts[1], 12)
+    await instance.mint(ACCT_0_ADDR, 12)
+    await instance.mint(ACCT_1_ADDR, 12)
       
     const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
 
-    const address0 = accounts[0]
-    const address1 = accounts[1]
+    const address0 = ACCT_0_ADDR
+    const address1 = ACCT_1_ADDR
 
     const balance0 = 6
     const balance1 = 6
@@ -149,13 +146,13 @@ test('PaymentChannels', async () => {
   test('newChannel bad amount', async t => {
     const snapshot = await takeSnapshot()
 
-    await instance.mint(accounts[0], 12)
-    await instance.mint(accounts[1], 12)
+    await instance.mint(ACCT_0_ADDR, 12)
+    await instance.mint(ACCT_1_ADDR, 12)
       
     const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
 
-    const address0 = accounts[0]
-    const address1 = accounts[1]
+    const address0 = ACCT_0_ADDR
+    const address1 = ACCT_1_ADDR
 
     const balance0 = 6
     const balance1 = 60000
@@ -199,13 +196,13 @@ test('PaymentChannels', async () => {
   test('newChannel already exists', async t => {
     const snapshot = await takeSnapshot()
 
-    await instance.mint(accounts[0], 12)
-    await instance.mint(accounts[1], 12)
+    await instance.mint(ACCT_0_ADDR, 12)
+    await instance.mint(ACCT_1_ADDR, 12)
       
     const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
 
-    const address0 = accounts[0]
-    const address1 = accounts[1]
+    const address0 = ACCT_0_ADDR
+    const address1 = ACCT_1_ADDR
 
     const balance0 = 6
     const balance1 = 6
@@ -260,4 +257,4 @@ test('PaymentChannels', async () => {
 
     await revertSnapshot(snapshot)
   })
-})
+}
