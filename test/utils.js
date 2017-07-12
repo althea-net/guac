@@ -2,6 +2,13 @@ const leftPad = require('left-pad')
 const p = require('util').promisify
 const ethUtils = require('ethereumjs-util')
 
+const {
+  ACCT_0_PRIVKEY,
+  ACCT_0_ADDR,
+  ACCT_1_PRIVKEY,
+  ACCT_1_ADDR,
+} = require('./constants.js')
+
 module.exports = {
   sleep,
   takeSnapshot,
@@ -10,7 +17,10 @@ module.exports = {
   sign,
   ecrecover,
   filterLogs,
-  mineBlocks
+  mineBlocks,
+  createChannel,
+  updateState,
+  endChannel
 }
 
 function sleep (time) {
@@ -55,7 +65,6 @@ async function mineBlocks (count) {
   }
 }
 
-
 function solSha3 (...args) {
     args = args.map(arg => {
         if (typeof arg === 'string') {
@@ -95,4 +104,95 @@ function ecrecover (msg, sig) {
 
 function filterLogs (logs) {
   return logs.map(log => [ log.event, log.args ])
+}
+
+
+async function createChannel (
+  instance,
+  channelId,
+
+  balance0,
+  balance1,
+
+  settlingPeriod
+) {
+  await instance.mint(ACCT_0_ADDR, 12)
+  await instance.mint(ACCT_1_ADDR, 12)
+
+  const fingerprint = solSha3(
+    'newChannel',
+    channelId,
+
+    ACCT_0_ADDR,
+    ACCT_1_ADDR,
+
+    balance0,
+    balance1,
+
+    settlingPeriod
+  )
+
+  const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
+  const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, 'hex'))
+
+  await instance.newChannel(
+    channelId,
+
+    ACCT_0_ADDR,
+    ACCT_1_ADDR,
+
+    balance0,
+    balance1,
+
+    settlingPeriod,
+
+    signature0,
+    signature1
+  )
+}
+
+async function updateState (
+    instance,
+    channelId,
+    sequenceNumber,
+    balance0,
+    balance1,
+    hashlocks
+) {
+  const fingerprint = solSha3(
+    'updateState',
+    channelId,
+    sequenceNumber,
+    balance0,
+    balance1,
+    hashlocks
+  )
+
+  const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
+  const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, 'hex'))
+
+  await instance.updateState(
+    channelId,
+    sequenceNumber,
+    
+    balance0,
+    balance1,
+    
+    hashlocks,
+
+    signature0,
+    signature1
+  )
+}
+
+async function endChannel (instance, channelId) {
+  const endChannelFingerprint = solSha3(
+    'endChannel',
+    channelId
+  )
+
+  await instance.endChannel(
+    channelId,
+    sign(endChannelFingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
+  )
 }
