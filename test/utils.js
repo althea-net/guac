@@ -9,7 +9,8 @@ module.exports = {
   solSha3,
   sign,
   ecrecover,
-  filterLogs
+  filterLogs,
+  mineBlocks
 }
 
 function sleep (time) {
@@ -20,28 +21,40 @@ function sleep (time) {
 
 let snapshotInc = 0
 
-function takeSnapshot() {
-  return new Promise(async (accept) => {
-    let res = await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
-      jsonrpc: '2.0',
-      method: 'evm_snapshot',
-      id: snapshotInc++
-    })
-    accept(res.result)
+async function takeSnapshot() {
+  let res = await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
+    jsonrpc: '2.0',
+    method: 'evm_snapshot',
+    id: snapshotInc++
+  })
+  return res.result
+}
+
+async function revertSnapshot (snapshotId) {
+  await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
+    jsonrpc: '2.0',
+    method: 'evm_revert',
+    params: [snapshotId],
+    id: snapshotInc++
   })
 }
 
-function revertSnapshot (snapshotId) {
-  return new Promise(async (accept) => {
-    await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
-      jsonrpc: '2.0',
-      method: 'evm_revert',
-      params: [snapshotId],
-      id: snapshotInc++
-    })
-    accept()
+async function mineBlock () {
+  await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
+    jsonrpc: '2.0',
+    method: 'evm_mine',
+    id: new Date().getTime()
   })
 }
+
+async function mineBlocks (count) {
+  let i = 0
+  while (i < count) {
+    await mineBlock()
+    i++
+  }
+}
+
 
 function solSha3 (...args) {
     args = args.map(arg => {

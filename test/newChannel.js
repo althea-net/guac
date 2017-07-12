@@ -34,7 +34,7 @@ module.exports = async (test, instance) => {
     const balance0 = 6
     const balance1 = 6
 
-    const challengePeriod = 2
+    const settlingPeriod = 2
 
     const fingerprint = solSha3(
       'newChannel',
@@ -46,7 +46,7 @@ module.exports = async (test, instance) => {
       balance0,
       balance1,
 
-      challengePeriod
+      settlingPeriod
     )
 
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
@@ -61,7 +61,7 @@ module.exports = async (test, instance) => {
       balance0,
       balance1,
 
-      challengePeriod,
+      settlingPeriod,
 
       signature0,
       signature1
@@ -107,7 +107,7 @@ module.exports = async (test, instance) => {
     const balance0 = 6
     const balance1 = 6
 
-    const challengePeriod = 2
+    const settlingPeriod = 2
 
     const fingerprint = solSha3(
       'newChannel derp',
@@ -119,7 +119,7 @@ module.exports = async (test, instance) => {
       balance0,
       balance1,
 
-      challengePeriod
+      settlingPeriod
     )
 
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
@@ -134,7 +134,7 @@ module.exports = async (test, instance) => {
       balance0,
       balance1,
 
-      challengePeriod,
+      settlingPeriod,
 
       signature0,
       signature1
@@ -157,7 +157,7 @@ module.exports = async (test, instance) => {
     const balance0 = 6
     const balance1 = 60000
 
-    const challengePeriod = 2
+    const settlingPeriod = 2
 
     const fingerprint = solSha3(
       'newChannel',
@@ -169,7 +169,7 @@ module.exports = async (test, instance) => {
       balance0,
       balance1,
 
-      challengePeriod
+      settlingPeriod
     )
 
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
@@ -184,7 +184,7 @@ module.exports = async (test, instance) => {
       balance0,
       balance1,
 
-      challengePeriod,
+      settlingPeriod,
 
       signature0,
       signature1
@@ -207,7 +207,7 @@ module.exports = async (test, instance) => {
     const balance0 = 6
     const balance1 = 6
 
-    const challengePeriod = 2
+    const settlingPeriod = 2
 
     const fingerprint = solSha3(
       'newChannel',
@@ -219,7 +219,7 @@ module.exports = async (test, instance) => {
       balance0,
       balance1,
 
-      challengePeriod
+      settlingPeriod
     )
 
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
@@ -234,7 +234,7 @@ module.exports = async (test, instance) => {
       balance0,
       balance1,
 
-      challengePeriod,
+      settlingPeriod,
 
       signature0,
       signature1
@@ -249,7 +249,7 @@ module.exports = async (test, instance) => {
       balance0,
       balance1,
 
-      challengePeriod,
+      settlingPeriod,
 
       signature0,
       signature1

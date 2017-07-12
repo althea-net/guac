@@ -25,7 +25,7 @@ contract PaymentChannels is ECVerify, MintableToken {
     }
 
     function channelIsNotEnded (bytes32 _channelId) {
-        require(channels[_channelId].ended);
+        require(!channels[_channelId].ended);
     }
 
     function channelIsNotClosed (bytes32 _channelId) {
@@ -34,20 +34,16 @@ contract PaymentChannels is ECVerify, MintableToken {
 
     function channelIsSettled (bytes32 _channelId) {
         require(
-            channels[_channelId].ended &&
-            block.number >= channels[_channelId].challengeBlock
+            channels[_channelId].ended && // If the channel is ended
+            block.number >= channels[_channelId].settlingBlock // And the settling block has happened
         );
     }
 
     function channelIsNotSettled (bytes32 _channelId) {
-        // LogBool("channels[_channelId].ended", channels[_channelId].ended);
-        // LogBool("block.number < channels[_channelId].challengeBlock", block.number < channels[_channelId].challengeBlock);
-        // LogBool("!channels[_channelId].ended || block.number < channels[_channelId].challengeBlock", !channels[_channelId].ended || block.number < channels[_channelId].challengeBlock);
-        
-        require(
-            !channels[_channelId].ended ||
-            block.number < channels[_channelId].challengeBlock
-        );
+        require(!(
+            channels[_channelId].ended && // If the channel is ended
+            block.number >= channels[_channelId].settlingBlock // And the settling block has happened
+        ));
     }
 
     function balancesEqualTotal (bytes32 _channelId, uint256 _balance0, uint256 _balance1) {
@@ -98,8 +94,8 @@ contract PaymentChannels is ECVerify, MintableToken {
 
         bool ended;
         bool closed;
-        uint256 challengePeriod;
-        uint256 challengeBlock;
+        uint256 settlingPeriod;
+        uint256 settlingBlock;
 
         uint256 balance0;
         uint256 balance1;
@@ -119,7 +115,7 @@ contract PaymentChannels is ECVerify, MintableToken {
         uint256 _balance0,
         uint256 _balance1,
 
-        uint256 _challengePeriod,
+        uint256 _settlingPeriod,
 
         bytes _signature0,
         bytes _signature1
@@ -135,7 +131,7 @@ contract PaymentChannels is ECVerify, MintableToken {
             _balance0,
             _balance1,
 
-            _challengePeriod
+            _settlingPeriod
         );
 
         signedByBoth(
@@ -156,8 +152,8 @@ contract PaymentChannels is ECVerify, MintableToken {
             
             false,                       // bool ended;
             false,                       // bool closed;
-            _challengePeriod,            // uint256 challengePeriod;
-            0,                           // uint256 challengeBlock;
+            _settlingPeriod,            // uint256 settlingPeriod;
+            0,                           // uint256 settlingBlock;
 
             _balance0,                   // uint256 balance0;
             _balance1,                   // uint256 balance1;
@@ -170,21 +166,6 @@ contract PaymentChannels is ECVerify, MintableToken {
 
         NewChannel(_channelId);
     }
-
-    // function sigTest(
-    //     bytes32 _item,
-    //     bytes32 _hashed,
-    //     address _address,
-    //     bytes _signature
-    // ) {
-    //     bytes32 hashed = sha3(_item);
-
-    //     LogBool("hashed equals", hashed == _hashed);
-
-    //     bool b = ecverify(_hashed, _signature, _address);
-
-    //     LogBool("ecverify", b);
-    // }
 
     function updateState(
         bytes32 _channelId,
@@ -201,7 +182,7 @@ contract PaymentChannels is ECVerify, MintableToken {
         channelExists(_channelId);
         channelIsNotSettled(_channelId);
         sequenceNumberIsHighest(_channelId, _sequenceNumber);
-        balancesEqualTotal(_channelId, _balance0, _balance1);
+        balancesEqualTotal(_channelId, _balance0, _balance1); // Might not be neccesary, but maybe want it anyway
 
         bytes32 fingerprint = sha3(
             "updateState",
@@ -234,7 +215,7 @@ contract PaymentChannels is ECVerify, MintableToken {
         seenPreimage[_hashed] = true;
     }
 
-    function end (
+    function endChannel (
         bytes32 _channelId,
         bytes _signature
     ) {
@@ -254,7 +235,7 @@ contract PaymentChannels is ECVerify, MintableToken {
         );
 
         channels[_channelId].ended = true;
-        channels[_channelId].challengeBlock = block.number  + channels[_channelId].challengePeriod;
+        channels[_channelId].settlingBlock = block.number  + channels[_channelId].settlingPeriod;
     }
 
     function close (
@@ -317,18 +298,16 @@ contract PaymentChannels is ECVerify, MintableToken {
         internal
         returns (uint256 balance0, uint256 balance1)
     {
-        uint256 uintTotalAdjustment = uint256(_totalAdjustment);
-
         if (_totalAdjustment > 0) {
-            balance0 = _currentBalance0.add(uintTotalAdjustment);
-            balance1 = _currentBalance1.sub(uintTotalAdjustment);
+            balance0 = _currentBalance0.add(uint256(_totalAdjustment));
+            balance1 = _currentBalance1.sub(uint256(_totalAdjustment));
         }
 
         if (_totalAdjustment < 0) {
-            balance0 = _currentBalance0.sub(uintTotalAdjustment);
-            balance1 = _currentBalance1.add(uintTotalAdjustment);
+            balance0 = _currentBalance0.sub(uint256(_totalAdjustment));
+            balance1 = _currentBalance1.add(uint256(_totalAdjustment));
         }
 
-        assert(balance0.add(balance1) == channels[_channelId].totalBalance);
+        balancesEqualTotal(_channelId, balance0, balance1);
     }
 }
