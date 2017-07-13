@@ -9,6 +9,7 @@ contract PaymentChannels is ECVerify, MintableToken {
     event LogBytes32(string label, bytes32 message);
     event LogAddresses(string label, address addr0, address addr1);
     event LogUint256(string label, uint256 num);
+    event LogInt256(string label, int256 num);
     event LogBool(string label, bool message);
 
     event NewChannel(bytes32 channelId);
@@ -238,7 +239,7 @@ contract PaymentChannels is ECVerify, MintableToken {
         channels[_channelId].settlingBlock = block.number  + channels[_channelId].settlingPeriod;
     }
 
-    function close (
+    function closeChannel (
         bytes32 _channelId
     ) {
         channelExists(_channelId);
@@ -250,31 +251,32 @@ contract PaymentChannels is ECVerify, MintableToken {
 
         channels[_channelId].closed = true;
 
-        int256 adjustment = getHashlockAdjustment(channels[_channelId].hashlocks);
+        // int256 adjustment = getHashlockAdjustment(channels[_channelId].hashlocks);
 
-        (balance0, balance1) = applyHashlockAdjustment(
-            _channelId,
-            channels[_channelId].balance0,
-            channels[_channelId].balance1,
-            adjustment
-        );
+        // (balance0, balance1) = applyHashlockAdjustment(
+        //     _channelId,
+        //     channels[_channelId].balance0,
+        //     channels[_channelId].balance1,
+        //     adjustment
+        // );
 
-        incrementBalance(channels[_channelId].address0, balance0);
-        incrementBalance(channels[_channelId].address1, balance1);
+        // incrementBalance(channels[_channelId].address0, balance0);
+        // incrementBalance(channels[_channelId].address1, balance1);
     }
 
     function getHashlockAdjustment (
         bytes _hashlocks
     ) 
-        internal
-        returns (int256 totalAdjustment)
+        // internal
+        // returns (int256 totalAdjustment)
     {
-        require(_hashlocks.length % 64 == 0);
+        LogUint256("_hashlocks.length", _hashlocks.length);
+        LogBool("is %", _hashlocks.length % 64 == 0);
 
         bytes32 hashed;
         int256 adjustment;
 
-        for (uint256 i = 0; i <= _hashlocks.length; i += 64) {
+        for (uint256 i = 0; i < _hashlocks.length; i += 64) {
             uint256 hashedOffset = i + 32;
             uint256 adjustmentOffset = i + 64;
 
@@ -283,11 +285,14 @@ contract PaymentChannels is ECVerify, MintableToken {
                 adjustment := mload(add(_hashlocks, adjustmentOffset))
             }
 
-            if (seenPreimage[hashed]) {
-                totalAdjustment += adjustment;
-            }
+            // if (seenPreimage[hashed]) {
+            //     totalAdjustment += adjustment;
+            // }
+            AppliedHashlock(i, hashed, adjustment);
         }
     }
+
+    event AppliedHashlock(uint256 i, bytes32 hashed, int256 adjustment);
 
     function applyHashlockAdjustment (
         bytes32 _channelId,
@@ -306,6 +311,11 @@ contract PaymentChannels is ECVerify, MintableToken {
         if (_totalAdjustment < 0) {
             balance0 = _currentBalance0.sub(uint256(_totalAdjustment));
             balance1 = _currentBalance1.add(uint256(_totalAdjustment));
+        }
+
+        if (_totalAdjustment == 0) {
+            balance0 = _currentBalance0;
+            balance1 = _currentBalance1;
         }
 
         balancesEqualTotal(_channelId, balance0, balance1);

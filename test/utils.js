@@ -20,7 +20,8 @@ module.exports = {
   mineBlocks,
   createChannel,
   updateState,
-  endChannel
+  endChannel,
+  toSolUint256
 }
 
 function sleep (time) {
@@ -63,6 +64,10 @@ async function mineBlocks (count) {
     await mineBlock()
     i++
   }
+}
+
+function toSolUint256 (num) {
+  return leftPad((num).toString(16), 64, 0)
 }
 
 function solSha3 (...args) {

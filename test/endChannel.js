@@ -85,7 +85,7 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot)
   })
 
-  test.only('endChannel bad sig', async t => {
+  test('endChannel bad sig', async t => {
     const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
 
     const endChannelFingerprint = solSha3(
