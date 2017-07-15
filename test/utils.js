@@ -1,6 +1,7 @@
 const leftPad = require('left-pad')
 const p = require('util').promisify
 const ethUtils = require('ethereumjs-util')
+const BN = require('bn.js')
 
 const {
   ACCT_0_PRIVKEY,
@@ -21,7 +22,8 @@ module.exports = {
   createChannel,
   updateState,
   endChannel,
-  toSolUint256
+  toSolUint256,
+  toSolInt256
 }
 
 function sleep (time) {
@@ -68,6 +70,10 @@ async function mineBlocks (count) {
 
 function toSolUint256 (num) {
   return leftPad((num).toString(16), 64, 0)
+}
+
+function toSolInt256 (num) {
+  return new BN(num).toTwos(256).toString(16, 64)
 }
 
 function solSha3 (...args) {

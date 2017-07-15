@@ -212,6 +212,9 @@ contract PaymentChannels is ECVerify, MintableToken {
         bytes32 _hashed,
         bytes32 _preimage
     ) {
+        LogBytes32("_hashed", _hashed);
+        LogBytes32("_preimage", _preimage);
+        LogBytes32("sha3(_preimage)", sha3(_preimage));
         require(_hashed == sha3(_preimage));
         seenPreimage[_hashed] = true;
     }
@@ -251,24 +254,24 @@ contract PaymentChannels is ECVerify, MintableToken {
 
         channels[_channelId].closed = true;
 
-        // int256 adjustment = getHashlockAdjustment(channels[_channelId].hashlocks);
+        int256 adjustment = getHashlockAdjustment(channels[_channelId].hashlocks);
 
-        // (balance0, balance1) = applyHashlockAdjustment(
-        //     _channelId,
-        //     channels[_channelId].balance0,
-        //     channels[_channelId].balance1,
-        //     adjustment
-        // );
+        (balance0, balance1) = applyHashlockAdjustment(
+            _channelId,
+            channels[_channelId].balance0,
+            channels[_channelId].balance1,
+            adjustment
+        );
 
-        // incrementBalance(channels[_channelId].address0, balance0);
-        // incrementBalance(channels[_channelId].address1, balance1);
+        incrementBalance(channels[_channelId].address0, balance0);
+        incrementBalance(channels[_channelId].address1, balance1);
     }
 
     function getHashlockAdjustment (
         bytes _hashlocks
     ) 
-        // internal
-        // returns (int256 totalAdjustment)
+        internal
+        returns (int256 totalAdjustment)
     {
         LogUint256("_hashlocks.length", _hashlocks.length);
         LogBool("is %", _hashlocks.length % 64 == 0);
@@ -285,9 +288,9 @@ contract PaymentChannels is ECVerify, MintableToken {
                 adjustment := mload(add(_hashlocks, adjustmentOffset))
             }
 
-            // if (seenPreimage[hashed]) {
-            //     totalAdjustment += adjustment;
-            // }
+            if (seenPreimage[hashed]) {
+                totalAdjustment += adjustment;
+            }
             AppliedHashlock(i, hashed, adjustment);
         }
     }
@@ -309,8 +312,8 @@ contract PaymentChannels is ECVerify, MintableToken {
         }
 
         if (_totalAdjustment < 0) {
-            balance0 = _currentBalance0.sub(uint256(_totalAdjustment));
-            balance1 = _currentBalance1.add(uint256(_totalAdjustment));
+            balance0 = _currentBalance0.sub(uint256(-_totalAdjustment));
+            balance1 = _currentBalance1.add(uint256(-_totalAdjustment));
         }
 
         if (_totalAdjustment == 0) {
