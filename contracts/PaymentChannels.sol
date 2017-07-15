@@ -208,16 +208,35 @@ contract PaymentChannels is ECVerify, MintableToken {
         channels[_channelId].hashlocks = _hashlocks;
     }
 
+    function submitPreimages (
+        bytes pairs
+    ) {
+        bytes32 hashed;
+        bytes32 preimage;
+
+        for (uint256 i = 0; i < pairs.length; i += 64) {
+            uint256 hashedOffset = i + 32;
+            uint256 preimageOffset = i + 64;
+
+            assembly {
+                hashed := mload(add(pairs, hashedOffset))
+                preimage := mload(add(pairs, preimageOffset))
+            }
+
+            submitPreimage(hashed, preimage);
+        }
+    }
+
     function submitPreimage (
         bytes32 _hashed,
         bytes32 _preimage
     ) {
-        LogBytes32("_hashed", _hashed);
-        LogBytes32("_preimage", _preimage);
-        LogBytes32("sha3(_preimage)", sha3(_preimage));
         require(_hashed == sha3(_preimage));
         seenPreimage[_hashed] = true;
+        SawPreimage(_hashed, _preimage);
     }
+
+    event SawPreimage(bytes32 hashed, bytes32 preimage);
 
     function endChannel (
         bytes32 _channelId,
@@ -273,9 +292,6 @@ contract PaymentChannels is ECVerify, MintableToken {
         internal
         returns (int256 totalAdjustment)
     {
-        LogUint256("_hashlocks.length", _hashlocks.length);
-        LogBool("is %", _hashlocks.length % 64 == 0);
-
         bytes32 hashed;
         int256 adjustment;
 
@@ -291,11 +307,11 @@ contract PaymentChannels is ECVerify, MintableToken {
             if (seenPreimage[hashed]) {
                 totalAdjustment += adjustment;
             }
-            AppliedHashlock(i, hashed, adjustment);
+            AppliedHashlock(hashed, adjustment);
         }
     }
 
-    event AppliedHashlock(uint256 i, bytes32 hashed, int256 adjustment);
+    event AppliedHashlock(bytes32 hashed, int256 adjustment);
 
     function applyHashlockAdjustment (
         bytes32 _channelId,
