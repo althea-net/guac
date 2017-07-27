@@ -1,10 +1,10 @@
-var ConvertLib = artifacts.require("./ConvertLib.sol");
-var MetaCoin = artifacts.require("./MetaCoin.sol");
-var PaymentChannels = artifacts.require("PaymentChannels");
+var ECVerify = artifacts.require("./ECVerify.sol");
+// var MetaCoin = artifacts.require("./MetaCoin.sol");
+var PaymentChannels = artifacts.require("./PaymentChannels.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(ConvertLib);
-  deployer.link(ConvertLib, MetaCoin);
-  deployer.deploy(MetaCoin);
-  deployer.deploy(PaymentChannels);
+    deployer.deploy(ECVerify);
+    // deployer.link(ConvertLib, MetaCoin);
+    //  deployer.deploy(MetaCoin);
+    deployer.deploy(PaymentChannels);
 };

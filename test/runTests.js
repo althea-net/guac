@@ -7,10 +7,11 @@ const endChannel = require('./endChannel.js')
 const closeChannel = require('./closeChannel.js')
 const PaymentChannels = artifacts.require('PaymentChannels')
 
-;(async () => {
-  const instance = await PaymentChannels.deployed()
-  newChannel(test, instance)
-  updateState(test, instance)
-  endChannel(test, instance)
-  closeChannel(test, instance)
+;
+(async() => {
+    const instance = await PaymentChannels.deployed()
+    newChannel(test, instance)
+        //  updateState(test, instance)
+        //  endChannel(test, instance)
+        //  closeChannel(test, instance)
 })()
