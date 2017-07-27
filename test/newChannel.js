@@ -95,7 +95,7 @@ module.exports = async(test, instance) => {
         await revertSnapshot(snapshot)
     })
 
-    test.only('newChannel bad amount', async t => {
+    test('newChannel bad amount', async t => {
         const snapshot = await takeSnapshot()
 
         createChannel(
@@ -166,7 +166,7 @@ module.exports = async(test, instance) => {
     })
 
 
-    test('newChannel bad amount', async t => {
+    test.only('newChannel bad amount', async t => {
         const snapshot = await takeSnapshot()
 
         createChannel(
@@ -175,7 +175,7 @@ module.exports = async(test, instance) => {
             '0x1000000000000000000000000000000000000000000000000000000000000000',
 
             6,
-            6,
+            60,
 
             2
         )
