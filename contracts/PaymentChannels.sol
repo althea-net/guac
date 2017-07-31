@@ -328,8 +328,8 @@ contract PaymentChannels is ECVerify, MintableToken {
         }
 
         if (_totalAdjustment < 0) {
-            balance0 = _currentBalance0.sub(uint256(-_totalAdjustment));
-            balance1 = _currentBalance1.add(uint256(-_totalAdjustment));
+            balance0 = _currentBalance0.sub(uint256(_totalAdjustment));
+            balance1 = _currentBalance1.add(uint256(_totalAdjustment));
         }
 
         if (_totalAdjustment == 0) {
