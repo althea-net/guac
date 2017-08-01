@@ -9,9 +9,9 @@ const PaymentChannels = artifacts.require('PaymentChannels')
 
 ;
 (async() => {
-    const instance = await PaymentChannels.deployed()
-    newChannel(test, instance)
-        //  updateState(test, instance)
-        //  endChannel(test, instance)
-        //  closeChannel(test, instance)
+    const instance = await PaymentChannels.deployed() // returns instance of PaymentChannel contract that was previously deployed
+        // newChannel(test, instance)   // tested pass/ fail conditions, all tests are working
+    updateState(test, instance) // tested pass/ fail conditions, 6/9 tests working as expected
+        // endChannel(test, instance)   // tested pass/ fail conditions, all tests are working
+        // closeChannel(test, instance) // needs work...
 })()

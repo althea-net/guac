@@ -1,0 +1,65 @@
+corvo@Neptune:~/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG$ npm run test
+
+> truffletest@1.0.0 test /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG
+> truffle test
+
+Using network 'development'.
+
+
+
+  0 passing (0ms)
+
+TAP version 13
+# updateState happy path
+not ok 1 Error: Error: LevelUpArrayAdapter named 'blocks' index out of range: index 36; length: 34 at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:97358:23 at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:97332:5 at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:97778:12 at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:97543:19 at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:100234:7 at _combinedTickCallback (internal/process/next_tick.js:131:7) at process._tickCallback (internal/process/next_tick.js:180:9)
+  ---
+    operator: error
+    expected: |-
+      undefined
+    actual: |-
+      [Error: Error: LevelUpArrayAdapter named 'blocks' index out of range: index 36; length: 34
+    at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:97358:23
+    at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:97332:5
+    at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:97778:12
+    at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:97543:19
+    at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:100234:7
+    at _combinedTickCallback (internal/process/next_tick.js:131:7)
+    at process._tickCallback (internal/process/next_tick.js:180:9)]
+    at: process._tickCallback (internal/process/next_tick.js:188:7)
+    stack: |-
+      Error: Error: LevelUpArrayAdapter named 'blocks' index out of range: index 36; length: 34
+          at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:97358:23
+          at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:97332:5
+          at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:97778:12
+          at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:97543:19
+          at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/ethereumjs-testrpc/build/cli.node.js:100234:7
+          at _combinedTickCallback (internal/process/next_tick.js:131:7)
+          at process._tickCallback (internal/process/next_tick.js:180:9)
+          at Object.InvalidResponse (/home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/truffle/build/cli.bundled.js:37022:16)
+          at /home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/truffle/build/cli.bundled.js:209743:36
+          at XMLHttpRequest.request.onreadystatechange (/home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/truffle/build/cli.bundled.js:208522:13)
+          at XMLHttpRequestEventTarget.dispatchEvent (/home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/truffle/build/cli.bundled.js:210395:18)
+          at XMLHttpRequest._setReadyState (/home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/truffle/build/cli.bundled.js:210685:12)
+          at XMLHttpRequest._onHttpResponseEnd (/home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/truffle/build/cli.bundled.js:210840:12)
+          at IncomingMessage.<anonymous> (/home/corvo/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG/node_modules/truffle/build/cli.bundled.js:210800:24)
+          at emitNone (events.js:110:20)
+          at IncomingMessage.emit (events.js:207:7)
+          at endReadableNT (_stream_readable.js:1045:12)
+  ...
+
+1..1
+# tests 1
+# pass  0
+# fail  1
+
+npm ERR! code ELIFECYCLE
+npm ERR! errno 1
+npm ERR! truffletest@1.0.0 test: `truffle test`
+npm ERR! Exit status 1
+npm ERR!
+npm ERR! Failed at the truffletest@1.0.0 test script.
+npm ERR! This is probably not a problem with npm. There is likely additional logging output above.
+
+npm ERR! A complete log of this run can be found in:
+npm ERR!     /home/corvo/.npm/_logs/2017-07-30T02_01_30_049Z-debug.log
+corvo@Neptune:~/Dropbox/Althea/TokenDeployment/guac-master-3/guac-OG$

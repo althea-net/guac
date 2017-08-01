@@ -1,0 +1,12 @@
+Question Thread
+
+1) replace string values with randomly generated encrypted key?
+
+2) 'updateState not ended but settled' does not fail...
+
+3) Holdoff period is measured in blocks rather than time? 
+
+4) TestRPC throwing runtime error "invalid opcode" message, shows several blocks were skipped over... possibly related to snapshot revert?
+
+5)  setting sequencenumber in contract to 10 causes 'updateState low seq #' to fail, whereas 0 causes it to pass... shouldnt it be the otherway around?
+

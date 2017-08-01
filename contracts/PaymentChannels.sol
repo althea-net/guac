@@ -35,15 +35,15 @@ contract PaymentChannels is ECVerify, MintableToken {
 
     function channelIsSettled (bytes32 _channelId) {
         require(
-            channels[_channelId].ended && // If the channel is ended
-            block.number >= channels[_channelId].settlingBlock // And the settling block has happened
+            channels[_channelId].ended && // If the channel has ended
+            block.number >= channels[_channelId].settlingBlock // And the settling block has happened, settling block is defined as the current block.number + settling period (holdoff time) 
         );
     }
 
     function channelIsNotSettled (bytes32 _channelId) {
         require(!(
-            channels[_channelId].ended && // If the channel is ended
-            block.number >= channels[_channelId].settlingBlock // And the settling block has happened
+            channels[_channelId].ended && // If the channel has ended
+            block.number >= channels[_channelId].settlingBlock // And the settling block has happened, settling block is defined as the current block.number + settling period (holdoff time)
         ));
     }
 
@@ -123,7 +123,7 @@ contract PaymentChannels is ECVerify, MintableToken {
     ) {
         channelDoesNotExist(_channelId);
         bytes32 fingerprint = sha3(
-            "newChannel",
+            "newChannel", 
             _channelId,
 
             _address0,

@@ -23,7 +23,8 @@ module.exports = {
     updateState,
     endChannel,
     toSolUint256,
-    toSolInt256
+    toSolInt256,
+    closeChannel
 }
 
 function sleep(time) {
@@ -120,6 +121,7 @@ function filterLogs(logs) {
 
 async function createChannel(
     instance,
+    string,
     channelId,
 
     balance0,
@@ -131,7 +133,7 @@ async function createChannel(
     await instance.mint(ACCT_1_ADDR, 12)
 
     const fingerprint = solSha3( // hashing values
-        'newChannel',
+        string,
         channelId,
 
         ACCT_0_ADDR,
@@ -146,20 +148,20 @@ async function createChannel(
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex')) // creates signature
     const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, 'hex'))
 
-    // await instance.newChannel(
-    //     channelId,
+    await instance.newChannel(
+        channelId,
 
-    //     ACCT_0_ADDR,
-    //     ACCT_1_ADDR,
+        ACCT_0_ADDR,
+        ACCT_1_ADDR,
 
-    //     balance0,
-    //     balance1,
+        balance0,
+        balance1,
 
-    //     settlingPeriod,
+        settlingPeriod,
 
-    //     signature0,
-    //     signature1
-    // )
+        signature0,
+        signature1
+    )
 }
 
 async function updateState(
@@ -207,3 +209,48 @@ async function endChannel(instance, channelId) {
         sign(endChannelFingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
     )
 }
+
+
+async function closeChannel(instance, channelId) {
+
+    await instance.closeChannel(
+        channelId
+    )
+}
+
+
+
+// async function closeChannel(instance, string, channelId, hashlocks) {
+//     await createChannel(
+//         instance,
+//         string,
+//         channelId,
+
+//         6,
+//         6,
+
+//         2
+//     )
+
+//     await updateState(
+//         instance,
+//         channelId,
+//         1,
+
+//         5,
+//         7,
+
+//         hashlocks
+//     )
+
+//     await endChannel(
+//         instance,
+//         channelId
+//     )
+
+//     await mineBlocks(5)
+
+//     await instance.closeChannel(
+//         channelId
+//     )
+// }
