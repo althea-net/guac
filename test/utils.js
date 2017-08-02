@@ -4,79 +4,79 @@ const ethUtils = require('ethereumjs-util')
 const BN = require('bn.js')
 
 const {
-  ACCT_0_PRIVKEY,
-  ACCT_0_ADDR,
-  ACCT_1_PRIVKEY,
-  ACCT_1_ADDR,
+    ACCT_0_PRIVKEY,
+    ACCT_0_ADDR,
+    ACCT_1_PRIVKEY,
+    ACCT_1_ADDR,
 } = require('./constants.js')
 
 module.exports = {
-  sleep,
-  takeSnapshot,
-  revertSnapshot,
-  solSha3,
-  sign,
-  ecrecover,
-  filterLogs,
-  mineBlocks,
-  createChannel,
-  updateState,
-  endChannel,
-  toSolUint256,
-  toSolInt256
+    sleep,
+    takeSnapshot,
+    revertSnapshot,
+    solSha3,
+    sign,
+    ecrecover,
+    filterLogs,
+    mineBlocks,
+    createChannel,
+    updateState,
+    endChannel,
+    toSolUint256,
+    toSolInt256
 }
 
-function sleep (time) {
-  return new Promise(resolve => {
-    setTimeout(resolve, time)
-  })
+function sleep(time) {
+    return new Promise(resolve => {
+        setTimeout(resolve, time)
+    })
 }
 
 let snapshotInc = 0
 
 async function takeSnapshot() {
-  let res = await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
-    jsonrpc: '2.0',
-    method: 'evm_snapshot',
-    id: snapshotInc++
-  })
-  return res.result
+    let res = await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
+        jsonrpc: '2.0',
+        method: 'evm_snapshot',
+        id: snapshotInc++
+    })
+    return res.result
 }
 
-async function revertSnapshot (snapshotId) {
-  await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
-    jsonrpc: '2.0',
-    method: 'evm_revert',
-    params: [snapshotId],
-    id: snapshotInc++
-  })
+async function revertSnapshot(snapshotId) {
+    await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
+        jsonrpc: '2.0',
+        method: 'evm_revert',
+        params: [snapshotId],
+        id: snapshotInc++
+    })
 }
 
-async function mineBlock () {
-  await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
-    jsonrpc: '2.0',
-    method: 'evm_mine',
-    id: new Date().getTime()
-  })
+async function mineBlock() {
+    await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
+        jsonrpc: '2.0',
+        method: 'evm_mine',
+        id: new Date().getTime()
+    })
 }
 
-async function mineBlocks (count) {
-  let i = 0
-  while (i < count) {
-    await mineBlock()
-    i++
-  }
+async function mineBlocks(count) {
+    let i = 0
+    while (i < count) {
+        await mineBlock()
+        i++
+    }
 }
 
-function toSolUint256 (num) {
-  return leftPad((num).toString(16), 64, 0)
+function toSolUint256(num) {
+    return leftPad((num).toString(16), 64, 0)
 }
 
-function toSolInt256 (num) {
-  return new BN(num).toTwos(256).toString(16, 64)
+function toSolInt256(num) {
+    return new BN(num).toTwos(256).toString(16, 64)
 }
 
-function solSha3 (...args) {
+function solSha3(...args) {
     args = args.map(arg => {
         if (typeof arg === 'string') {
             if (arg.substring(0, 2) === '0x') {
@@ -96,73 +96,74 @@ function solSha3 (...args) {
     return web3.sha3(args, { encoding: 'hex' })
 }
 
-function sign (msgHash, privKey) {
-  if (typeof msgHash === 'string' && msgHash.slice(0, 2) === '0x') {
-    msgHash = Buffer.alloc(32, msgHash.slice(2), 'hex')
-  }
-  const sig = ethUtils.ecsign(msgHash, privKey)
-  return `0x${sig.r.toString('hex')}${sig.s.toString('hex')}${sig.v.toString(16)}`
+function sign(msgHash, privKey) {
+    if (typeof msgHash === 'string' && msgHash.slice(0, 2) === '0x') {
+        msgHash = Buffer.alloc(32, msgHash.slice(2), 'hex')
+    }
+    const sig = ethUtils.ecsign(msgHash, privKey)
+    return `0x${sig.r.toString('hex')}${sig.s.toString('hex')}${sig.v.toString(16)}`
 }
 
-function ecrecover (msg, sig) {
-  const r = ethUtils.toBuffer(sig.slice(0, 66))
-  const s = ethUtils.toBuffer('0x' + sig.slice(66, 130))
-  const v = 27 + parseInt(sig.slice(130, 132))
-  const m = ethUtils.toBuffer(msg)
-  const pub = ethUtils.ecrecover(m, v, r, s)
-  return '0x' + ethUtils.pubToAddress(pub).toString('hex')
+function ecrecover(msg, sig) {
+    const r = ethUtils.toBuffer(sig.slice(0, 66))
+    const s = ethUtils.toBuffer('0x' + sig.slice(66, 130))
+    const v = 27 + parseInt(sig.slice(130, 132))
+    const m = ethUtils.toBuffer(msg)
+    const pub = ethUtils.ecrecover(m, v, r, s)
+    return '0x' + ethUtils.pubToAddress(pub).toString('hex')
 }
 
-function filterLogs (logs) {
-  return logs.map(log => [ log.event, log.args ])
+function filterLogs(logs) {
+    return logs.map(log => [log.event, log.args])
 }
 
 
-async function createChannel (
-  instance,
-  channelId,
-
-  balance0,
-  balance1,
-
-  settlingPeriod
-) {
-  await instance.mint(ACCT_0_ADDR, 12)
-  await instance.mint(ACCT_1_ADDR, 12)
-
-  const fingerprint = solSha3(
-    'newChannel',
+async function createChannel(
+    instance,
+    string,
     channelId,
-
-    ACCT_0_ADDR,
-    ACCT_1_ADDR,
 
     balance0,
     balance1,
 
     settlingPeriod
-  )
+) {
+    await instance.mint(ACCT_0_ADDR, 12)
+    await instance.mint(ACCT_1_ADDR, 12)
 
-  const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
-  const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, 'hex'))
+    const fingerprint = solSha3(
+        string,
+        channelId,
 
-  await instance.newChannel(
-    channelId,
+        ACCT_0_ADDR,
+        ACCT_1_ADDR,
 
-    ACCT_0_ADDR,
-    ACCT_1_ADDR,
+        balance0,
+        balance1,
 
-    balance0,
-    balance1,
+        settlingPeriod
+    )
 
-    settlingPeriod,
+    const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
+    const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, 'hex'))
 
-    signature0,
-    signature1
-  )
+    await instance.newChannel(
+        channelId,
+
+        ACCT_0_ADDR,
+        ACCT_1_ADDR,
+
+        balance0,
+        balance1,
+
+        settlingPeriod,
+
+        signature0,
+        signature1
+    )
 }
 
-async function updateState (
+async function updateState(
     instance,
     channelId,
     sequenceNumber,
@@ -170,40 +171,40 @@ async function updateState (
     balance1,
     hashlocks
 ) {
-  const fingerprint = solSha3(
-    'updateState',
-    channelId,
-    sequenceNumber,
-    balance0,
-    balance1,
-    hashlocks
-  )
+    const fingerprint = solSha3(
+        'updateState',
+        channelId,
+        sequenceNumber,
+        balance0,
+        balance1,
+        hashlocks
+    )
 
-  const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
-  const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, 'hex'))
+    const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
+    const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, 'hex'))
 
-  await instance.updateState(
-    channelId,
-    sequenceNumber,
-    
-    balance0,
-    balance1,
-    
-    hashlocks,
+    await instance.updateState(
+        channelId,
+        sequenceNumber,
 
-    signature0,
-    signature1
-  )
+        balance0,
+        balance1,
+
+        hashlocks,
+
+        signature0,
+        signature1
+    )
 }
 
-async function endChannel (instance, channelId) {
-  const endChannelFingerprint = solSha3(
-    'endChannel',
-    channelId
-  )
+async function endChannel(instance, channelId) {
+    const endChannelFingerprint = solSha3(
+        'endChannel',
+        channelId
+    )
 
-  await instance.endChannel(
-    channelId,
-    sign(endChannelFingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
-  )
+    await instance.endChannel(
+        channelId,
+        sign(endChannelFingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
+    )
 }
