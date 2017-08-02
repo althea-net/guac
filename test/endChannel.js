@@ -8,6 +8,8 @@ const {
     ACCT_0_ADDR,
     ACCT_1_PRIVKEY,
     ACCT_1_ADDR,
+    ACCT_2_PRIVKEY,
+    ACCT_2_ADDR,
 } = require('./constants.js')
 
 const {
@@ -24,7 +26,6 @@ const {
 
 module.exports = async(test, instance) => {
     // endChannel happy path is tested in updateState.js
-
     test('endChannel nonexistant channel', async t => {
         const snapshot = await takeSnapshot()
 
@@ -138,6 +139,47 @@ module.exports = async(test, instance) => {
         t.shouldFail(instance.endChannel(
             channelId,
             sign(endChannelFingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
+        ))
+
+        await revertSnapshot(snapshot)
+    })
+
+    test.only('endChannel fake private key', async t => {
+        const snapshot = await takeSnapshot()
+
+        const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
+        const string = 'newChannel'
+
+        const endChannelFingerprint = solSha3(
+            'endChannel',
+            channelId
+        )
+
+        await createChannel(
+            instance,
+            string,
+            channelId,
+
+            6,
+            6,
+
+            2
+        )
+
+        await updateState(
+            instance,
+            channelId,
+            1,
+
+            5,
+            7,
+
+            '0x'
+        )
+
+        t.shouldFail(instance.endChannel(
+            channelId,
+            sign(endChannelFingerprint, new Buffer(ACCT_2_PRIVKEY, 'hex'))
         ))
 
         await revertSnapshot(snapshot)
