@@ -116,7 +116,7 @@ module.exports = async (test, instance) => {
     web3.eth.getBlock('latest', (err, block) => {
       console.log('submitPreimages', err, block)
     })
-    
+
     await mineBlocks(1)
 
     await closeChannel(
@@ -145,30 +145,30 @@ module.exports = async (test, instance) => {
   })
 }
 
-async function closeChannel (instance, channelId, hashlocks) {
-    await createChannel(
-      instance,
-      channelId,
-      6, 6,
-      2
-    )
+async function closeChannel(instance, channelId, hashlocks) {
+  await createChannel(
+    instance,
+    channelId,
+    6, 6,
+    2
+  )
 
-    await updateState(
-      instance,
-      channelId,
-      1,
-      5, 7,
-      hashlocks
-    )
+  await updateState(
+    instance,
+    channelId,
+    1,
+    5, 7,
+    hashlocks
+  )
 
-    await endChannel(
-      instance,
-      channelId
-    )
+  await endChannel(
+    instance,
+    channelId
+  )
 
-    await mineBlocks(5)
+  await mineBlocks(5)
 
-    await instance.closeChannel(
-      channelId
-    )
+  await instance.closeChannel(
+    channelId
+  )
 }

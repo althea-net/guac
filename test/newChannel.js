@@ -21,7 +21,6 @@ const {
 } = require('./utils.js')
 
 module.exports = async(test, instance) => {
-
     test('newChannel happy path', async t => {
         const snapshot = await takeSnapshot()
         const eventLog = instance.allEvents()
@@ -89,7 +88,6 @@ module.exports = async(test, instance) => {
         await revertSnapshot(snapshot)
 
     })
-
 
 
     test('newChannel bad amount', async t => {

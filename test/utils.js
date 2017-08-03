@@ -27,9 +27,9 @@ module.exports = {
 }
 
 function sleep(time) {
-    return new Promise(resolve => {
-        setTimeout(resolve, time)
-    })
+  return new Promise(resolve => {
+    setTimeout(resolve, time)
+  })
 }
 
 let snapshotInc = 0
@@ -44,77 +44,77 @@ async function takeSnapshot() {
 }
 
 async function revertSnapshot(snapshotId) {
-    await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
-        jsonrpc: '2.0',
-        method: 'evm_revert',
-        params: [snapshotId],
-        id: snapshotInc++
-    })
+  await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
+    jsonrpc: '2.0',
+    method: 'evm_revert',
+    params: [snapshotId],
+    id: snapshotInc++
+  })
 }
 
 async function mineBlock() {
-    await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
-        jsonrpc: '2.0',
-        method: 'evm_mine',
-        id: new Date().getTime()
-    })
+  await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
+    jsonrpc: '2.0',
+    method: 'evm_mine',
+    id: new Date().getTime()
+  })
 }
 
 async function mineBlocks(count) {
-    let i = 0
-    while (i < count) {
-        await mineBlock()
-        i++
-    }
+  let i = 0
+  while (i < count) {
+    await mineBlock()
+    i++
+  }
 }
 
 function toSolUint256(num) {
-    return leftPad((num).toString(16), 64, 0)
+  return leftPad((num).toString(16), 64, 0)
 }
 
 function toSolInt256(num) {
-    return new BN(num).toTwos(256).toString(16, 64)
+  return new BN(num).toTwos(256).toString(16, 64)
 }
 
 function solSha3(...args) {
-    args = args.map(arg => {
-        if (typeof arg === 'string') {
-            if (arg.substring(0, 2) === '0x') {
-                return arg.slice(2)
-            } else {
-                return web3.toHex(arg).slice(2)
-            }
-        }
+  args = args.map(arg => {
+    if (typeof arg === 'string') {
+      if (arg.substring(0, 2) === '0x') {
+        return arg.slice(2)
+      } else {
+        return web3.toHex(arg).slice(2)
+      }
+    }
 
-        if (typeof arg === 'number') {
-            return leftPad((arg).toString(16), 64, 0)
-        }
-    })
+    if (typeof arg === 'number') {
+      return leftPad((arg).toString(16), 64, 0)
+    }
+  })
 
-    args = args.join('')
+  args = args.join('')
 
-    return web3.sha3(args, { encoding: 'hex' })
+  return web3.sha3(args, { encoding: 'hex' })
 }
 
 function sign(msgHash, privKey) {
-    if (typeof msgHash === 'string' && msgHash.slice(0, 2) === '0x') {
-        msgHash = Buffer.alloc(32, msgHash.slice(2), 'hex')
-    }
-    const sig = ethUtils.ecsign(msgHash, privKey)
-    return `0x${sig.r.toString('hex')}${sig.s.toString('hex')}${sig.v.toString(16)}`
+  if (typeof msgHash === 'string' && msgHash.slice(0, 2) === '0x') {
+    msgHash = Buffer.alloc(32, msgHash.slice(2), 'hex')
+  }
+  const sig = ethUtils.ecsign(msgHash, privKey)
+  return `0x${sig.r.toString('hex')}${sig.s.toString('hex')}${sig.v.toString(16)}`
 }
 
 function ecrecover(msg, sig) {
-    const r = ethUtils.toBuffer(sig.slice(0, 66))
-    const s = ethUtils.toBuffer('0x' + sig.slice(66, 130))
-    const v = 27 + parseInt(sig.slice(130, 132))
-    const m = ethUtils.toBuffer(msg)
-    const pub = ethUtils.ecrecover(m, v, r, s)
-    return '0x' + ethUtils.pubToAddress(pub).toString('hex')
+  const r = ethUtils.toBuffer(sig.slice(0, 66))
+  const s = ethUtils.toBuffer('0x' + sig.slice(66, 130))
+  const v = 27 + parseInt(sig.slice(130, 132))
+  const m = ethUtils.toBuffer(msg)
+  const pub = ethUtils.ecrecover(m, v, r, s)
+  return '0x' + ethUtils.pubToAddress(pub).toString('hex')
 }
 
 function filterLogs(logs) {
-    return logs.map(log => [log.event, log.args])
+  return logs.map(log => [log.event, log.args])
 }
 
 
@@ -202,7 +202,6 @@ async function endChannel(instance, channelId) {
         'endChannel',
         channelId
     )
-
     await instance.endChannel(
         channelId,
         sign(endChannelFingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
