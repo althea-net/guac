@@ -46,18 +46,18 @@ module.exports = async (test, instance) => {
 
     t.deepEqual(
       JSON.parse(JSON.stringify(await instance.channels(channelId))),
-      [ channelId,
-        
+      [channelId,
+
         '0xa09bd41a9f1d469fca7b3f82a579b855dd6b279d',
         '0x25e27882eeb2159ad3164ed2622241740dfe0528',
-        
+
         false, false,
-        
+
         '2', '0',
-        
+
         '5', '7', '12',
-        
-        '0x', '1' ]
+
+        '0x', '1']
     )
 
     const logs = await p(eventLog.get.bind(eventLog))()
@@ -117,7 +117,7 @@ module.exports = async (test, instance) => {
     if (blocksMined) {
       await mineBlocks(blocksMined)
     }
-  
+
     await updateState(
       instance,
       channelId,
@@ -133,26 +133,26 @@ module.exports = async (test, instance) => {
     await createChannel(instance)
 
     await updateState(
-      instance,  
+      instance,
       '0x1000000000000000000000000000000000000000000000000000000000000000',
-      
+
       3,
-      
+
       5,
       7,
-      
+
       '0x'
     )
 
     t.shouldFail(updateState(
-      instance,  
+      instance,
       '0x1000000000000000000000000000000000000000000000000000000000000000',
-      
+
       3,
-      
+
       5,
       7,
-      
+
       '0x'
     ))
 
@@ -165,14 +165,14 @@ module.exports = async (test, instance) => {
     await createChannel(instance)
 
     t.shouldFail(updateState(
-      instance,  
+      instance,
       '0x1000000000000000000000000000000000000000000000000000000000000000',
-      
+
       3,
-      
+
       5000000,
       7,
-      
+
       '0x'
     ))
 
@@ -208,10 +208,10 @@ module.exports = async (test, instance) => {
     t.shouldFail(instance.updateState(
       channelId,
       sequenceNumber,
-      
+
       balance0,
       balance1,
-      
+
       hashlocks,
 
       signature0,

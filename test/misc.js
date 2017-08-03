@@ -15,7 +15,7 @@ module.exports = function (PaymentChannels) {
 
     test('submitPreimage', async t => {
       const eventLog = instance.allEvents()
-      
+
       await instance.submitPreimage(
         solSha3('0x1000000000000000000000000000000000000000000000000000000000000000'),
         '0x1000000000000000000000000000000000000000000000000000000000000000'

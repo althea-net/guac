@@ -25,7 +25,7 @@ module.exports = async (test, instance) => {
 
     await instance.mint(ACCT_0_ADDR, 12)
     await instance.mint(ACCT_1_ADDR, 12)
-      
+
     const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
 
     const address0 = ACCT_0_ADDR
@@ -71,19 +71,20 @@ module.exports = async (test, instance) => {
     t.equal((await instance.balanceOf(ACCT_0_ADDR)).c[0], 6)
 
     t.deepEqual(
-      JSON.parse(JSON.stringify(await instance.channels(channelId))),
-      [ '0x1000000000000000000000000000000000000000000000000000000000000000',
-        
+      JSON.parse(JSON.stringify(await instance.channels(channelId))), [
+        '0x1000000000000000000000000000000000000000000000000000000000000000',
+
         '0xa09bd41a9f1d469fca7b3f82a579b855dd6b279d',
         '0x25e27882eeb2159ad3164ed2622241740dfe0528',
-        
+
         false, false,
-        
+
         '2', '0',
-        
+
         '6', '6', '12',
-        
-        '0x', '0' ]
+
+        '0x', '0'
+      ]
     )
 
     const logs = await p(eventLog.get.bind(eventLog))()
@@ -98,7 +99,7 @@ module.exports = async (test, instance) => {
 
     await instance.mint(ACCT_0_ADDR, 12)
     await instance.mint(ACCT_1_ADDR, 12)
-      
+
     const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
 
     const address0 = ACCT_0_ADDR
@@ -148,7 +149,7 @@ module.exports = async (test, instance) => {
 
     await instance.mint(ACCT_0_ADDR, 12)
     await instance.mint(ACCT_1_ADDR, 12)
-      
+
     const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
 
     const address0 = ACCT_0_ADDR
@@ -198,7 +199,7 @@ module.exports = async (test, instance) => {
 
     await instance.mint(ACCT_0_ADDR, 12)
     await instance.mint(ACCT_1_ADDR, 12)
-      
+
     const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
 
     const address0 = ACCT_0_ADDR

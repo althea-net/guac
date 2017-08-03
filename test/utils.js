@@ -26,7 +26,7 @@ module.exports = {
   toSolInt256
 }
 
-function sleep (time) {
+function sleep(time) {
   return new Promise(resolve => {
     setTimeout(resolve, time)
   })
@@ -43,7 +43,7 @@ async function takeSnapshot() {
   return res.result
 }
 
-async function revertSnapshot (snapshotId) {
+async function revertSnapshot(snapshotId) {
   await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
     jsonrpc: '2.0',
     method: 'evm_revert',
@@ -52,7 +52,7 @@ async function revertSnapshot (snapshotId) {
   })
 }
 
-async function mineBlock () {
+async function mineBlock() {
   await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
     jsonrpc: '2.0',
     method: 'evm_mine',
@@ -60,7 +60,7 @@ async function mineBlock () {
   })
 }
 
-async function mineBlocks (count) {
+async function mineBlocks(count) {
   let i = 0
   while (i < count) {
     await mineBlock()
@@ -68,35 +68,35 @@ async function mineBlocks (count) {
   }
 }
 
-function toSolUint256 (num) {
+function toSolUint256(num) {
   return leftPad((num).toString(16), 64, 0)
 }
 
-function toSolInt256 (num) {
+function toSolInt256(num) {
   return new BN(num).toTwos(256).toString(16, 64)
 }
 
-function solSha3 (...args) {
-    args = args.map(arg => {
-        if (typeof arg === 'string') {
-            if (arg.substring(0, 2) === '0x') {
-                return arg.slice(2)
-            } else {
-                return web3.toHex(arg).slice(2)
-            }
-        }
+function solSha3(...args) {
+  args = args.map(arg => {
+    if (typeof arg === 'string') {
+      if (arg.substring(0, 2) === '0x') {
+        return arg.slice(2)
+      } else {
+        return web3.toHex(arg).slice(2)
+      }
+    }
 
-        if (typeof arg === 'number') {
-            return leftPad((arg).toString(16), 64, 0)
-        }
-    })
+    if (typeof arg === 'number') {
+      return leftPad((arg).toString(16), 64, 0)
+    }
+  })
 
-    args = args.join('')
+  args = args.join('')
 
-    return web3.sha3(args, { encoding: 'hex' })
+  return web3.sha3(args, { encoding: 'hex' })
 }
 
-function sign (msgHash, privKey) {
+function sign(msgHash, privKey) {
   if (typeof msgHash === 'string' && msgHash.slice(0, 2) === '0x') {
     msgHash = Buffer.alloc(32, msgHash.slice(2), 'hex')
   }
@@ -104,7 +104,7 @@ function sign (msgHash, privKey) {
   return `0x${sig.r.toString('hex')}${sig.s.toString('hex')}${sig.v.toString(16)}`
 }
 
-function ecrecover (msg, sig) {
+function ecrecover(msg, sig) {
   const r = ethUtils.toBuffer(sig.slice(0, 66))
   const s = ethUtils.toBuffer('0x' + sig.slice(66, 130))
   const v = 27 + parseInt(sig.slice(130, 132))
@@ -113,12 +113,12 @@ function ecrecover (msg, sig) {
   return '0x' + ethUtils.pubToAddress(pub).toString('hex')
 }
 
-function filterLogs (logs) {
-  return logs.map(log => [ log.event, log.args ])
+function filterLogs(logs) {
+  return logs.map(log => [log.event, log.args])
 }
 
 
-async function createChannel (
+async function createChannel(
   instance,
   channelId,
 
@@ -162,13 +162,13 @@ async function createChannel (
   )
 }
 
-async function updateState (
-    instance,
-    channelId,
-    sequenceNumber,
-    balance0,
-    balance1,
-    hashlocks
+async function updateState(
+  instance,
+  channelId,
+  sequenceNumber,
+  balance0,
+  balance1,
+  hashlocks
 ) {
   const fingerprint = solSha3(
     'updateState',
@@ -185,10 +185,10 @@ async function updateState (
   await instance.updateState(
     channelId,
     sequenceNumber,
-    
+
     balance0,
     balance1,
-    
+
     hashlocks,
 
     signature0,
@@ -196,7 +196,7 @@ async function updateState (
   )
 }
 
-async function endChannel (instance, channelId) {
+async function endChannel(instance, channelId) {
   const endChannelFingerprint = solSha3(
     'endChannel',
     channelId
