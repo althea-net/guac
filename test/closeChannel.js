@@ -1,185 +1,133 @@
 // cook mango twist then skin sort option civil have still rather guilt
 
-// TODO
-// CS: 
-//      - Get haslocks working 100% 
-//      - Add more tests for happy path w/o hashlocks
-
-const test = require('blue-tape')
-const p = require('util').promisify
+const test = require("blue-tape");
+const p = require("util").promisify;
 
 const {
-    ACCT_0_PRIVKEY,
-    ACCT_0_ADDR,
-    ACCT_1_PRIVKEY,
-    ACCT_1_ADDR,
-} = require('./constants.js')
+  ACCT_0_PRIVKEY,
+  ACCT_0_ADDR,
+  ACCT_1_PRIVKEY,
+  ACCT_1_ADDR
+} = require("./constants.js");
 
 const {
-    filterLogs,
-    takeSnapshot,
-    revertSnapshot,
-    solSha3,
-    sign,
-    mineBlocks,
-    createChannel,
-    updateState,
-    endChannel,
-    toSolUint256,
-    toSolInt256,
-    closeChannel
-} = require('./utils.js')
+  filterLogs,
+  takeSnapshot,
+  revertSnapshot,
+  solSha3,
+  sign,
+  mineBlocks,
+  createChannel,
+  updateState,
+  endChannel,
+  toSolUint256,
+  toSolInt256,
+  closeChannel
+} = require("./utils.js");
 
-module.exports = async(test, instance) => {
+module.exports = async (test, instance) => {
+  test("closeChannel happy path no hashlocks", async t => {
+    const snapshot = await takeSnapshot();
+    const eventLog = instance.allEvents();
 
-    test('closeChannel happy path no hashlocks', async t => {
-        const snapshot = await takeSnapshot()
-        const eventLog = instance.allEvents()
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-        const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
-        const string = 'newChannel'
+    await closeChannel(instance, string, channelId, "0x");
 
-        await createChannel(
-            instance,
-            string,
-            channelId,
+    web3.eth.getBlock("latest", (err, block) => {
+      console.log("dododododo", err, block);
+    });
 
-            6,
-            6,
+    t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "11");
+    t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "13");
 
-            2
-        )
+    const logs = await p(eventLog.get.bind(eventLog))();
+    console.log(
+      "logs",
+      filterLogs(logs).map(log => {
+        return Object.entries(log[1]).reduce((acc, [key, val]) => {
+          acc[key] = val && val.toString();
+          return acc;
+        });
+      })
+    );
+    eventLog.stopWatching();
 
-        await updateState(
-            instance,
-            channelId,
-            1,
+    await revertSnapshot(snapshot);
+  });
 
-            5,
-            7,
+  //incomplete
+  test.only("channel does not exist", async t => {
+    const snapshot = await takeSnapshot();
 
-            '0x'
-        )
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const channelIdFake =
+      "0x2000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-        await mineBlocks(5)
+    await createChannel(instance, string, channelId, 6, 6, 2);
 
-        await endChannel(
-            instance,
-            channelId
-        )
+    await updateState(instance, channelId, 1, 5, 7, "0x");
 
-        await closeChannel(
-            instance,
-            channelId,
-        )
+    await endChannel(instance, channelId);
 
-        web3.eth.getBlock('latest', (err, block) => {
-            console.log('dododododo', err, block)
-        })
+    await mineBlocks(5);
 
-        t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), '11')
-        t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), '13')
+    t.shouldFail(instance.closeChannel(channelIdFake));
 
-        const logs = await p(eventLog.get.bind(eventLog))()
-        console.log('logs', filterLogs(logs).map(log => {
-            return Object.entries(log[1]).reduce((acc, [key, val]) => {
-                acc[key] = val && val.toString()
-                return acc
-            })
-        }))
-        eventLog.stopWatching()
+    await revertSnapshot(snapshot);
+  });
 
-        await revertSnapshot(snapshot)
-    })
+  test("channel is not settled", async t => {
+    const snapshot = await takeSnapshot();
 
-    // test('closeChannel happy path no hashlocks', async t => {
-    //     const snapshot = await takeSnapshot()
-    //     const eventLog = instance.allEvents()
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-    //     const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
-    //     const string = 'newChannel'
+    await createChannel(instance, string, channelId, 6, 6, 2);
 
-    //     await closeChannel(
-    //         instance,
-    //         string,
-    //         channelId,
-    //         '0x'
-    //     )
+    await updateState(instance, channelId, 1, 5, 7, "0x");
 
-    //     web3.eth.getBlock('latest', (err, block) => {
-    //         console.log('dododododo', err, block)
-    //     })
+    // await endChannel(instance, channelId);
 
-    //     t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), '11')
-    //     t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), '13')
+    // await mineBlocks(5);
 
-    //     const logs = await p(eventLog.get.bind(eventLog))()
-    //     console.log('logs', filterLogs(logs).map(log => {
-    //         return Object.entries(log[1]).reduce((acc, [key, val]) => {
-    //             acc[key] = val && val.toString()
-    //             return acc
-    //         })
-    //     }))
-    //     eventLog.stopWatching()
+    t.shouldFail(instance.closeChannel(channelId));
 
-    //     await revertSnapshot(snapshot)
-    // })
+    await revertSnapshot(snapshot);
+  });
 
+  test("channel is already closed", async t => {
+    const snapshot = await takeSnapshot();
 
-    test.only('channel does not exist', async t => { // cannot run twice in a row, causes testNPC to hang...
-        const snapshot = await takeSnapshot()
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-        const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
-        const string = 'newChannel'
+    await closeChannel(instance, string, channelId, "0x");
 
-        await createChannel(
-            instance,
-            string,
-            channelId,
+    t.shouldFail(closeChannel(instance, string, channelId, "0x"));
 
-            6,
-            6,
+    await revertSnapshot(snapshot);
+  });
 
-            2
-        )
+  test("hashlocks do not match", async t => {
+    const snapshot = await takeSnapshot();
 
-        await updateState(
-            instance,
-            channelId,
-            1,
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-            5,
-            7,
+    t.shouldFail(closeChannel(instance, string, channelId, "0x1"));
 
-            '0x'
-        )
+    await revertSnapshot(snapshot);
+  });
 
-
-        await endChannel(
-            instance,
-            channelId
-        )
-
-        await mineBlocks(5)
-
-
-        t.shouldFail(closeChannel(
-            instance,
-            '0x2000000000000000000000000000000000000000000000000000000000000000'
-        ))
-
-        await revertSnapshot(snapshot)
-
-    })
-
-    // Channel is not settled
-
-    // Channel is closed
-
-    // Hashlocks do not match
-
-
-    /* Not being used for the time being
+  /* Not being used for the time being
 
         test('closeChannel happy path with hashlocks', async t => {
             const snapshot = await takeSnapshot()
@@ -273,6 +221,4 @@ module.exports = async(test, instance) => {
 
             await revertSnapshot(snapshot)
         })*/
-
-
-}
+};
