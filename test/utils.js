@@ -23,7 +23,8 @@ module.exports = {
   updateState,
   endChannel,
   toSolUint256,
-  toSolInt256
+  toSolInt256,
+  closeChannel
 };
 
 function sleep(time) {
@@ -188,8 +189,17 @@ async function updateState(
 
 async function endChannel(instance, channelId) {
   const endChannelFingerprint = solSha3("endChannel", channelId);
+
   await instance.endChannel(
     channelId,
     sign(endChannelFingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"))
   );
+}
+
+async function closeChannel(instance, string, channelId, hashlocks) {
+  await createChannel(instance, string, channelId, 6, 6, 2);
+  await updateState(instance, channelId, 1, 5, 7, hashlocks);
+  await endChannel(instance, channelId);
+  await mineBlocks(5);
+  await instance.closeChannel(channelId);
 }
