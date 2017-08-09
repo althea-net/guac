@@ -1,187 +1,113 @@
 // cook mango twist then skin sort option civil have still rather guilt
 
-const test = require('blue-tape')
-const p = require('util').promisify
+const test = require("blue-tape");
+const p = require("util").promisify;
 
 const {
-    ACCT_0_PRIVKEY,
-    ACCT_0_ADDR,
-    ACCT_1_PRIVKEY,
-    ACCT_1_ADDR,
-    ACCT_2_PRIVKEY,
-    ACCT_2_ADDR,
-} = require('./constants.js')
+  ACCT_0_PRIVKEY,
+  ACCT_0_ADDR,
+  ACCT_1_PRIVKEY,
+  ACCT_1_ADDR,
+  ACCT_2_PRIVKEY,
+  ACCT_2_ADDR
+} = require("./constants.js");
 
 const {
-    filterLogs,
-    takeSnapshot,
-    revertSnapshot,
-    solSha3,
-    sign,
-    mineBlocks,
-    createChannel,
-    updateState,
-    endChannel
-} = require('./utils.js')
+  filterLogs,
+  takeSnapshot,
+  revertSnapshot,
+  solSha3,
+  sign,
+  mineBlocks,
+  createChannel,
+  updateState,
+  endChannel
+} = require("./utils.js");
 
-module.exports = async(test, instance) => {
-    // endChannel happy path is tested in updateState.js
-    test('endChannel nonexistant channel', async t => {
-        const snapshot = await takeSnapshot()
+module.exports = async (test, instance) => {
+  // endChannel happy path is tested in updateState.js
+  test("endChannel nonexistant channel", async t => {
+    const snapshot = await takeSnapshot();
 
-        const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
-        const string = 'newChannel'
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-        await createChannel(
-            instance,
-            string,
-            channelId,
+    await createChannel(instance, string, channelId, 6, 6, 2);
 
-            6,
-            6,
+    await updateState(instance, channelId, 1, 5, 7, "0x");
 
-            2
-        )
+    t.shouldFail(
+      endChannel(
+        instance,
+        "0x2000000000000000000000000000000000000000000000000000000000000000"
+      )
+    );
 
-        await updateState(
-            instance,
-            channelId,
-            1,
+    await revertSnapshot(snapshot);
+  });
 
-            5,
-            7,
+  test("endChannel already ended", async t => {
+    const snapshot = await takeSnapshot();
 
-            '0x'
-        )
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-        t.shouldFail(endChannel(
-            instance,
-            '0x2000000000000000000000000000000000000000000000000000000000000000'
-        ))
+    await createChannel(instance, string, channelId, 6, 6, 2);
 
-        await revertSnapshot(snapshot)
-    })
+    await updateState(instance, channelId, 1, 5, 7, "0x");
 
-    test('endChannel already ended', async t => {
-        const snapshot = await takeSnapshot()
+    endChannel(instance, channelId);
 
-        const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
-        const string = 'newChannel'
+    t.shouldFail(endChannel(instance, channelId));
 
-        await createChannel(
-            instance,
-            string,
-            channelId,
+    await revertSnapshot(snapshot);
+  });
 
-            6,
-            6,
+  test("endChannel bad sig", async t => {
+    const snapshot = await takeSnapshot();
 
-            2
-        )
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-        await updateState(
-            instance,
-            channelId,
-            1,
+    const endChannelFingerprint = solSha3("endChannel derp", channelId);
 
-            5,
-            7,
+    await createChannel(instance, string, channelId, 6, 6, 2);
 
-            '0x'
-        )
+    await updateState(instance, channelId, 1, 5, 7, "0x");
 
-        endChannel(
-            instance,
-            channelId
-        )
+    t.shouldFail(
+      instance.endChannel(
+        channelId,
+        sign(endChannelFingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"))
+      )
+    );
 
-        t.shouldFail(endChannel(
-            instance,
-            channelId
-        ))
+    await revertSnapshot(snapshot);
+  });
 
-        await revertSnapshot(snapshot)
-    })
+  test.only("endChannel fake private key", async t => {
+    const snapshot = await takeSnapshot();
 
-    test('endChannel bad sig', async t => {
-        const snapshot = await takeSnapshot()
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-        const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
-        const string = 'newChannel'
+    const endChannelFingerprint = solSha3("endChannel", channelId);
 
-        const endChannelFingerprint = solSha3(
-            'endChannel derp',
-            channelId
-        )
+    await createChannel(instance, string, channelId, 6, 6, 2);
 
-        await createChannel(
-            instance,
-            string,
-            channelId,
+    await updateState(instance, channelId, 1, 5, 7, "0x");
 
-            6,
-            6,
+    t.shouldFail(
+      instance.endChannel(
+        channelId,
+        sign(endChannelFingerprint, new Buffer(ACCT_2_PRIVKEY, "hex"))
+      )
+    );
 
-            2
-        )
-
-        await updateState(
-            instance,
-            channelId,
-            1,
-
-            5,
-            7,
-
-            '0x'
-        )
-
-        t.shouldFail(instance.endChannel(
-            channelId,
-            sign(endChannelFingerprint, new Buffer(ACCT_0_PRIVKEY, 'hex'))
-        ))
-
-        await revertSnapshot(snapshot)
-    })
-
-    test.only('endChannel fake private key', async t => {
-        const snapshot = await takeSnapshot()
-
-        const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
-        const string = 'newChannel'
-
-        const endChannelFingerprint = solSha3(
-            'endChannel',
-            channelId
-        )
-
-        await createChannel(
-            instance,
-            string,
-            channelId,
-
-            6,
-            6,
-
-            2
-        )
-
-        await updateState(
-            instance,
-            channelId,
-            1,
-
-            5,
-            7,
-
-            '0x'
-        )
-
-        t.shouldFail(instance.endChannel(
-            channelId,
-            sign(endChannelFingerprint, new Buffer(ACCT_2_PRIVKEY, 'hex'))
-        ))
-
-        await revertSnapshot(snapshot)
-    })
-}
+    await revertSnapshot(snapshot);
+  });
+};

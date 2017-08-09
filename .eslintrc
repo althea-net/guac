@@ -1,33 +1,29 @@
 {
-    "parserOptions": {
-        "ecmaVersion": 8
-    },
-    "rules": {
-      "no-shadow": 0,
-      "dot-notation": 0,
-      "no-use-before-define": 0,
-      "eqeqeq": 2,
-      "semi": 0,
-      "strict": 0,
-      "curly": 2,
-      "camelcase": 0,
-      "no-unused-vars": 1,
-      "quotes": [
-        2,
-        "single"
-      ],
-      "no-undef": 2,
-      "no-underscore-dangle": 0,
-      "comma-dangle": 0
-    },
-    "env": {
-      "node": true,
-      "mocha": true
-    },
-    "globals": {
-      "artifacts": true,
-      "contract": true,
-      "web3": true,
-      "Promise": true
-    }
+  "parserOptions": {
+    "ecmaVersion": 8
+  },
+  "rules": {
+    "no-shadow": 0,
+    "dot-notation": 0,
+    "no-use-before-define": 0,
+    "eqeqeq": 2,
+    "semi": 0,
+    "strict": 0,
+    "curly": 2,
+    "camelcase": 0,
+    "no-unused-vars": 1,
+    "no-undef": 2,
+    "no-underscore-dangle": 0,
+    "comma-dangle": 0
+  },
+  "env": {
+    "node": true,
+    "mocha": true
+  },
+  "globals": {
+    "artifacts": true,
+    "contract": true,
+    "web3": true,
+    "Promise": true
+  }
 }

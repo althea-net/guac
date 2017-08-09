@@ -1,146 +1,103 @@
 // cook mango twist then skin sort option civil have still rather guilt
 
-
-const test = require('blue-tape')
-const p = require('util').promisify
-
-const {
-    ACCT_0_PRIVKEY,
-    ACCT_1_PRIVKEY,
-    ACCT_0_ADDR,
-    ACCT_1_ADDR
-} = require('./constants.js')
+const test = require("blue-tape");
+const p = require("util").promisify;
 
 const {
-    createChannel,
-    filterLogs,
-    takeSnapshot,
-    revertSnapshot,
-    solSha3,
-    sign
-} = require('./utils.js')
+  ACCT_0_PRIVKEY,
+  ACCT_1_PRIVKEY,
+  ACCT_0_ADDR,
+  ACCT_1_ADDR
+} = require("./constants.js");
 
-module.exports = async(test, instance) => {
-    test('newChannel happy path', async t => {
-        const snapshot = await takeSnapshot()
-        const eventLog = instance.allEvents()
+const {
+  createChannel,
+  filterLogs,
+  takeSnapshot,
+  revertSnapshot,
+  solSha3,
+  sign
+} = require("./utils.js");
 
-        const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
-        const string = 'newChannel'
+module.exports = async (test, instance) => {
+  test("newChannel happy path", async t => {
+    const snapshot = await takeSnapshot();
+    const eventLog = instance.allEvents();
 
-        await createChannel(
-            instance,
-            string,
-            channelId,
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-            6,
-            6,
+    await createChannel(instance, string, channelId, 6, 6, 2);
 
-            2
-        )
+    t.equal((await instance.balanceOf(ACCT_0_ADDR)).c[0], 6);
+    t.equal((await instance.balanceOf(ACCT_1_ADDR)).c[0], 6);
 
+    t.deepEqual(
+      JSON.parse(JSON.stringify(await instance.channels(channelId))),
+      [
+        "0x1000000000000000000000000000000000000000000000000000000000000000",
 
-        t.equal((await instance.balanceOf(ACCT_0_ADDR)).c[0], 6)
-        t.equal((await instance.balanceOf(ACCT_1_ADDR)).c[0], 6)
+        "0xa09bd41a9f1d469fca7b3f82a579b855dd6b279d",
+        "0x25e27882eeb2159ad3164ed2622241740dfe0528",
 
-        t.deepEqual(
-            JSON.parse(JSON.stringify(await instance.channels(channelId))), ['0x1000000000000000000000000000000000000000000000000000000000000000',
+        false,
+        false,
 
-                '0xa09bd41a9f1d469fca7b3f82a579b855dd6b279d',
-                '0x25e27882eeb2159ad3164ed2622241740dfe0528',
+        "2",
+        "0",
 
-                false, false,
+        "6",
+        "6",
+        "12",
 
-                '2', '0',
+        "0x",
+        "0"
+      ]
+    );
 
-                '6', '6', '12',
+    const logs = await p(eventLog.get.bind(eventLog))();
+    console.log("logs", filterLogs(logs));
+    eventLog.stopWatching();
 
-                '0x', '0'
-            ]
-        )
+    await revertSnapshot(snapshot);
+  });
 
-        const logs = await p(eventLog.get.bind(eventLog))()
-        console.log('logs', filterLogs(logs))
-        eventLog.stopWatching()
+  test("newChannel bad sig", async t => {
+    const snapshot = await takeSnapshot();
 
-        await revertSnapshot(snapshot)
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel derp";
 
-    })
+    t.shouldFail(createChannel(instance, string, channelId, 6, 6, 2));
 
+    await revertSnapshot(snapshot);
+  });
 
-    test('newChannel bad sig', async t => {
-        const snapshot = await takeSnapshot()
+  test("newChannel bad amount", async t => {
+    const snapshot = await takeSnapshot();
 
-        const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
-        const string = 'newChannel derp'
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-        t.shouldFail(createChannel(
-            instance,
-            string,
-            channelId,
+    t.shouldFail(createChannel(instance, string, channelId, 6, 60, 2));
 
-            6,
-            6,
+    await revertSnapshot(snapshot);
+  });
 
-            2
-        ))
+  test("newChannel already exists", async t => {
+    const snapshot = await takeSnapshot();
 
-        await revertSnapshot(snapshot)
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-    })
+    createChannel(instance, string, channelId, 6, 6, 2);
 
+    t.shouldFail(createChannel(instance, string, channelId, 6, 6, 2));
 
-    test('newChannel bad amount', async t => {
-        const snapshot = await takeSnapshot()
-
-        const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
-        const string = 'newChannel'
-
-        t.shouldFail(createChannel(
-            instance,
-            string,
-            channelId,
-
-            6,
-            60,
-
-            2
-        ))
-
-        await revertSnapshot(snapshot)
-
-    })
-
-
-    test('newChannel already exists', async t => {
-        const snapshot = await takeSnapshot()
-
-        const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
-        const string = 'newChannel'
-
-        createChannel(
-            instance,
-            string,
-            channelId,
-
-            6,
-            6,
-
-            2
-        )
-
-        t.shouldFail(createChannel(
-            instance,
-            string,
-            channelId,
-
-            6,
-            6,
-
-            2
-        ))
-
-        await revertSnapshot(snapshot)
-
-    })
-}
+    await revertSnapshot(snapshot);
+  });
+};
