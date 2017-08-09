@@ -28,13 +28,11 @@ module.exports = async (test, instance) => {
   // endChannel happy path is tested in updateState.js
   test("endChannel nonexistant channel", async t => {
     const snapshot = await takeSnapshot();
-
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel";
 
     await createChannel(instance, string, channelId, 6, 6, 2);
-
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
     t.shouldFail(
@@ -49,16 +47,14 @@ module.exports = async (test, instance) => {
 
   test("endChannel already ended", async t => {
     const snapshot = await takeSnapshot();
-
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel";
 
     await createChannel(instance, string, channelId, 6, 6, 2);
-
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
-    endChannel(instance, channelId);
+    await endChannel(instance, channelId);
 
     t.shouldFail(endChannel(instance, channelId));
 
@@ -67,15 +63,12 @@ module.exports = async (test, instance) => {
 
   test("endChannel bad sig", async t => {
     const snapshot = await takeSnapshot();
-
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel";
-
     const endChannelFingerprint = solSha3("endChannel derp", channelId);
 
     await createChannel(instance, string, channelId, 6, 6, 2);
-
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
     t.shouldFail(
@@ -88,17 +81,14 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  test.only("endChannel fake private key", async t => {
+  test("endChannel wrong private key", async t => {
     const snapshot = await takeSnapshot();
-
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel";
-
     const endChannelFingerprint = solSha3("endChannel", channelId);
 
     await createChannel(instance, string, channelId, 6, 6, 2);
-
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
     t.shouldFail(
