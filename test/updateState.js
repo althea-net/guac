@@ -25,7 +25,7 @@ const {
 } = require("./utils.js");
 
 module.exports = async (test, instance) => {
-  test("updateState happy path", async t => {
+  test.only("updateState happy path", async t => {
     const snapshot = await takeSnapshot();
     const eventLog = instance.allEvents();
 
@@ -406,7 +406,7 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  test.only("updateState wrong private key", async t => {
+  test("updateState wrong private key", async t => {
     const snapshot = await takeSnapshot();
 
     const channelId =
