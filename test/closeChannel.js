@@ -21,7 +21,8 @@ const {
   updateState,
   endChannel,
   toSolUint256,
-  toSolInt256
+  toSolInt256,
+  closeChannel
 } = require("./utils.js");
 
 module.exports = async (test, instance) => {
@@ -31,8 +32,9 @@ module.exports = async (test, instance) => {
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-    await closeChannel(instance, channelId, "0x");
+    await closeChannel(instance, string, channelId, "0x");
 
     web3.eth.getBlock("latest", (err, block) => {
       console.log("dododododo", err, block);
@@ -56,7 +58,65 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  test("closeChannel happy path with hashlocks", async t => {
+  test("channel does not exist", async t => {
+    const snapshot = await takeSnapshot();
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const channelIdFake =
+      "0x2000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
+
+    await createChannel(instance, string, channelId, 6, 6, 2);
+    await updateState(instance, channelId, 1, 5, 7, "0x");
+    await endChannel(instance, channelId);
+    await mineBlocks(5);
+
+    await t.shouldFail(instance.closeChannel(channelIdFake));
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("channel is not settled", async t => {
+    const snapshot = await takeSnapshot();
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
+
+    await createChannel(instance, string, channelId, 6, 6, 2);
+    await updateState(instance, channelId, 1, 5, 7, "0x");
+
+    await t.shouldFail(instance.closeChannel(channelId));
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("channel is already closed", async t => {
+    const snapshot = await takeSnapshot();
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
+
+    await closeChannel(instance, string, channelId, "0x");
+
+    await t.shouldFail(closeChannel(instance, string, channelId, "0x"));
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("hashlocks do not match", async t => {
+    const snapshot = await takeSnapshot();
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
+
+    await t.shouldFail(closeChannel(instance, string, channelId, "0x1"));
+
+    await revertSnapshot(snapshot);
+  });
+
+  // /* Not being used for the time being
+
+  test.only("closeChannel happy path with hashlocks", async t => {
     const snapshot = await takeSnapshot();
     const eventLog = instance.allEvents();
 
@@ -67,11 +127,14 @@ module.exports = async (test, instance) => {
     const preimage2 =
       "0x3000000000000000000000000000000000000000000000000000000000000000";
 
+    const string = "newChannel";
+
     await instance.submitPreimage(solSha3(preimage1), preimage1);
     await instance.submitPreimage(solSha3(preimage2), preimage2);
 
     await closeChannel(
       instance,
+      string,
       channelId,
       `0x${solSha3(preimage1).slice(2)}${toSolInt256(-14)}${solSha3(
         preimage2
@@ -100,12 +163,13 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  test.only("closeChannel happy path with lots of hashlocks", async t => {
+  test("closeChannel happy path with lots of hashlocks", async t => {
     const snapshot = await takeSnapshot();
     const eventLog = instance.allEvents();
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
     let hashlocks = "0x";
     let preimages = "0x";
@@ -128,7 +192,7 @@ module.exports = async (test, instance) => {
 
     await mineBlocks(1);
 
-    await closeChannel(instance, channelId, hashlocks);
+    await closeChannel(instance, string, channelId, hashlocks);
 
     web3.eth.getBlock("latest", (err, block) => {
       console.log("closeChannel", err, block);
@@ -152,15 +216,3 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 };
-
-async function closeChannel(instance, channelId, hashlocks) {
-  await createChannel(instance, channelId, 6, 6, 2);
-
-  await updateState(instance, channelId, 1, 5, 7, hashlocks);
-
-  await endChannel(instance, channelId);
-
-  await mineBlocks(5);
-
-  await instance.closeChannel(channelId);
-}

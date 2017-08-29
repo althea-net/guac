@@ -7,7 +7,9 @@ const {
   ACCT_0_PRIVKEY,
   ACCT_0_ADDR,
   ACCT_1_PRIVKEY,
-  ACCT_1_ADDR
+  ACCT_1_ADDR,
+  ACCT_2_PRIVKEY,
+  ACCT_2_ADDR
 } = require("./constants.js");
 
 const {
@@ -29,8 +31,9 @@ module.exports = async (test, instance) => {
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-    await createChannel(instance, channelId, 6, 6, 2);
+    await createChannel(instance, string, channelId, 6, 6, 2);
 
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
@@ -69,10 +72,11 @@ module.exports = async (test, instance) => {
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-    await createChannel(instance, channelId, 6, 6, 2);
+    await createChannel(instance, string, channelId, 6, 6, 2);
 
-    t.shouldFail(
+    await t.shouldFail(
       updateState(
         instance,
         "0x2000000000000000000000000000000000000000000000000000000000000000",
@@ -86,85 +90,67 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  test("updateState ended but not settled", async t => {
+  test("endChannel before updateState", async t => {
     const snapshot = await takeSnapshot();
-    await updateStateEnded(t, 0);
-    await revertSnapshot(snapshot);
-  });
-
-  test("updateState settled channel", async t => {
-    const snapshot = await takeSnapshot();
-    t.shouldFail(updateStateEnded(t, 5));
-    await revertSnapshot(snapshot);
-  });
-
-  async function updateStateEnded(t, blocksMined) {
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-    await createChannel(instance, channelId, 6, 6, 2);
-
+    await createChannel(instance, string, channelId, 6, 6, 2);
     await endChannel(instance, channelId);
+    await mineBlocks(5);
 
-    if (blocksMined) {
-      await mineBlocks(blocksMined);
-    }
-
-    await updateState(instance, channelId, 1, 5, 7, "0x");
-  }
-
-  test("updateState low seq", async t => {
-    const snapshot = await takeSnapshot();
-
-    await createChannel(instance);
-
-    await updateState(
-      instance,
-      "0x1000000000000000000000000000000000000000000000000000000000000000",
-      3,
-      5,
-      7,
-      "0x"
-    );
-
-    t.shouldFail(
-      updateState(
-        instance,
-        "0x1000000000000000000000000000000000000000000000000000000000000000",
-        3,
-        5,
-        7,
-        "0x"
-      )
-    );
+    await t.shouldFail(updateState(instance, channelId, 1, 5, 7, "0x"));
 
     await revertSnapshot(snapshot);
   });
 
-  test("updateState wrong balances", async t => {
+  test("updateState low seq #", async t => {
     const snapshot = await takeSnapshot();
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-    await createChannel(instance);
+    await createChannel(instance, string, channelId, 6, 6, 2);
+    await updateState(instance, channelId, 3, 5, 7, "0x");
 
-    t.shouldFail(
-      updateState(
-        instance,
-        "0x1000000000000000000000000000000000000000000000000000000000000000",
-        3,
-        5000000,
-        7,
-        "0x"
-      )
-    );
+    await t.shouldFail(updateState(instance, channelId, 2, 5, 7, "0x"));
 
     await revertSnapshot(snapshot);
   });
 
-  test("updateState bad sig", async t => {
+  test("updateState exceeds total balance", async t => {
+    const snapshot = await takeSnapshot();
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
+
+    await createChannel(instance, string, channelId, 6, 6, 2);
+
+    await t.shouldFail(updateState(instance, channelId, 1, 7, 6, "0x"));
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("updateState below total balance", async t => {
+    const snapshot = await takeSnapshot();
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
+
+    await createChannel(instance, string, channelId, 6, 6, 2);
+
+    await t.shouldFail(updateState(instance, channelId, 1, 6, 5, "0x"));
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("updateState bad fingerprint (string)", async t => {
     const snapshot = await takeSnapshot();
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
     const sequenceNumber = 1;
 
@@ -173,7 +159,222 @@ module.exports = async (test, instance) => {
 
     const hashlocks = "0x";
 
-    await createChannel(instance);
+    await createChannel(instance, string, channelId, 6, 6, 2);
+
+    const fingerprint = solSha3(
+      "updateState derp",
+      channelId,
+      sequenceNumber,
+      balance0,
+      balance1,
+      hashlocks
+    );
+
+    const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
+    const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
+
+    await t.shouldFail(
+      instance.updateState(
+        channelId,
+        sequenceNumber,
+        balance0,
+        balance1,
+        hashlocks,
+        signature0,
+        signature1
+      )
+    );
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("updateState bad fingerprint (channelID)", async t => {
+    const snapshot = await takeSnapshot();
+
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
+
+    const sequenceNumber = 1;
+
+    const balance0 = 5;
+    const balance1 = 7;
+
+    const hashlocks = "0x";
+
+    await createChannel(instance, string, channelId, 6, 6, 2);
+
+    const fingerprint = solSha3(
+      "updateState",
+      "0x2000000000000000000000000000000000000000000000000000000000000000",
+      sequenceNumber,
+      balance0,
+      balance1,
+      hashlocks
+    );
+
+    const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
+    const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
+
+    await t.shouldFail(
+      instance.updateState(
+        channelId,
+        sequenceNumber,
+        balance0,
+        balance1,
+        hashlocks,
+        signature0,
+        signature1
+      )
+    );
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("updateState bad fingerprint (sequenceNumber)", async t => {
+    const snapshot = await takeSnapshot();
+
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
+
+    const sequenceNumber = 1;
+
+    const balance0 = 5;
+    const balance1 = 7;
+
+    const hashlocks = "0x";
+
+    await createChannel(instance, string, channelId, 6, 6, 2);
+
+    const fingerprint = solSha3(
+      "updateState",
+      channelId,
+      2,
+      balance0,
+      balance1,
+      hashlocks
+    );
+
+    const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
+    const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
+
+    await t.shouldFail(
+      instance.updateState(
+        channelId,
+        sequenceNumber,
+        balance0,
+        balance1,
+        hashlocks,
+        signature0,
+        signature1
+      )
+    );
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("updateState bad fingerprint (balance)", async t => {
+    const snapshot = await takeSnapshot();
+
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
+
+    const sequenceNumber = 1;
+
+    const balance0 = 5;
+    const balance1 = 7;
+
+    const hashlocks = "0x";
+
+    await createChannel(instance, string, channelId, 6, 6, 2);
+
+    const fingerprint = solSha3(
+      "updateState",
+      channelId,
+      sequenceNumber,
+      4,
+      balance1,
+      hashlocks
+    );
+
+    const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
+    const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
+
+    await t.shouldFail(
+      instance.updateState(
+        channelId,
+        sequenceNumber,
+        balance0,
+        balance1,
+        hashlocks,
+        signature0,
+        signature1
+      )
+    );
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("updateState bad fingerprint (hashlocks)", async t => {
+    const snapshot = await takeSnapshot();
+
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
+
+    const sequenceNumber = 1;
+
+    const balance0 = 5;
+    const balance1 = 7;
+
+    const hashlocks = "0x";
+
+    await createChannel(instance, string, channelId, 6, 6, 2);
+
+    const fingerprint = solSha3(
+      "updateState",
+      channelId,
+      sequenceNumber,
+      balance0,
+      balance1,
+      "0x1"
+    );
+
+    const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
+    const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
+
+    await t.shouldFail(
+      instance.updateState(
+        channelId,
+        sequenceNumber,
+        balance0,
+        balance1,
+        hashlocks,
+        signature0,
+        signature1
+      )
+    );
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("private key used twice", async t => {
+    const snapshot = await takeSnapshot();
+
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
+
+    const sequenceNumber = 1;
+
+    const balance0 = 5;
+    const balance1 = 7;
+
+    const hashlocks = "0x";
+
+    await createChannel(instance, string, channelId, 6, 6, 2);
 
     const fingerprint = solSha3(
       "updateState",
@@ -187,7 +388,50 @@ module.exports = async (test, instance) => {
     const signature0 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
     const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
 
-    t.shouldFail(
+    await t.shouldFail(
+      instance.updateState(
+        channelId,
+        sequenceNumber,
+        balance0,
+        balance1,
+        hashlocks,
+        signature0,
+        signature1
+      )
+    );
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("updateState wrong private key", async t => {
+    const snapshot = await takeSnapshot();
+
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
+
+    const sequenceNumber = 1;
+
+    const balance0 = 5;
+    const balance1 = 7;
+
+    const hashlocks = "0x";
+
+    await createChannel(instance, string, channelId, 6, 6, 2);
+
+    const fingerprint = solSha3(
+      "updateState",
+      channelId,
+      sequenceNumber,
+      balance0,
+      balance1,
+      hashlocks
+    );
+
+    const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
+    const signature1 = sign(fingerprint, new Buffer(ACCT_2_PRIVKEY, "hex"));
+
+    await t.shouldFail(
       instance.updateState(
         channelId,
         sequenceNumber,
