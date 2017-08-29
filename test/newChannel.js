@@ -12,10 +12,17 @@ const {
   ACCT_2_ADDR
 } = require("./constants.js");
 
-const { createChannel, solSha3, sign } = require("./utils.js");
+const {
+  createChannel,
+  solSha3,
+  sign,
+  takeSnapshot,
+  revertSnapshot
+} = require("./utils.js");
 
 module.exports = async (test, instance) => {
   test("newChannel happy path", async t => {
+    const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel";
@@ -47,35 +54,43 @@ module.exports = async (test, instance) => {
         "0"
       ]
     );
+    await revertSnapshot(snapshot);
   });
 
   test("newChannel bad sig", async t => {
+    const snapshot = await takeSnapshot();
     const channelId =
       "0x1100000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel derp";
 
-    t.shouldFail(createChannel(instance, string, channelId, 6, 6, 2));
+    await t.shouldFail(createChannel(instance, string, channelId, 6, 6, 2));
+    await revertSnapshot(snapshot);
   });
 
   test("newChannel bad amount", async t => {
+    const snapshot = await takeSnapshot();
     const channelId =
       "0x1200000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel";
 
-    t.shouldFail(createChannel(instance, string, channelId, 6, 13, 2));
+    await t.shouldFail(createChannel(instance, string, channelId, 6, 13, 2));
+    await revertSnapshot(snapshot);
   });
 
   test("newChannel already exists", async t => {
+    const snapshot = await takeSnapshot();
     const channelId =
       "0x1300000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel";
 
     await createChannel(instance, string, channelId, 6, 6, 2);
 
-    t.shouldFail(createChannel(instance, string, channelId, 6, 6, 2));
+    await t.shouldFail(createChannel(instance, string, channelId, 6, 6, 2));
+    await revertSnapshot(snapshot);
   });
 
   test("newChannel wrong private key", async t => {
+    const snapshot = await takeSnapshot();
     const channelId =
       "0x1400000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel";
@@ -96,7 +111,7 @@ module.exports = async (test, instance) => {
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
     const signature1 = sign(fingerprint, new Buffer(ACCT_2_PRIVKEY, "hex"));
 
-    t.shouldFail(
+    await t.shouldFail(
       instance.newChannel(
         channelId,
         ACCT_0_ADDR,
@@ -108,9 +123,11 @@ module.exports = async (test, instance) => {
         signature1
       )
     );
+    await revertSnapshot(snapshot);
   });
 
   test("newChannel wrong public key", async t => {
+    const snapshot = await takeSnapshot();
     const channelId =
       "0x1500000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel";
@@ -131,7 +148,7 @@ module.exports = async (test, instance) => {
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
     const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
 
-    t.shouldFail(
+    await t.shouldFail(
       instance.newChannel(
         channelId,
         ACCT_0_ADDR,
@@ -143,5 +160,6 @@ module.exports = async (test, instance) => {
         signature1
       )
     );
+    await revertSnapshot(snapshot);
   });
 };
