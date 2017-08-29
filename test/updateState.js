@@ -25,7 +25,7 @@ const {
 } = require("./utils.js");
 
 module.exports = async (test, instance) => {
-  test.only("updateState happy path", async t => {
+  test("updateState happy path", async t => {
     const snapshot = await takeSnapshot();
     const eventLog = instance.allEvents();
 
