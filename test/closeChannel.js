@@ -71,7 +71,7 @@ module.exports = async (test, instance) => {
     await endChannel(instance, channelId);
     await mineBlocks(5);
 
-    t.shouldFail(instance.closeChannel(channelIdFake));
+    await t.shouldFail(instance.closeChannel(channelIdFake));
 
     await revertSnapshot(snapshot);
   });
@@ -85,10 +85,7 @@ module.exports = async (test, instance) => {
     await createChannel(instance, string, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
-    // await endChannel(instance, channelId);
-    // await mineBlocks(5);
-
-    t.shouldFail(instance.closeChannel(channelId));
+    await t.shouldFail(instance.closeChannel(channelId));
 
     await revertSnapshot(snapshot);
   });
@@ -101,7 +98,7 @@ module.exports = async (test, instance) => {
 
     await closeChannel(instance, string, channelId, "0x");
 
-    t.shouldFail(closeChannel(instance, string, channelId, "0x"));
+    await t.shouldFail(closeChannel(instance, string, channelId, "0x"));
 
     await revertSnapshot(snapshot);
   });
@@ -112,103 +109,110 @@ module.exports = async (test, instance) => {
       "0x1000000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel";
 
-    t.shouldFail(closeChannel(instance, string, channelId, "0x1"));
+    await t.shouldFail(closeChannel(instance, string, channelId, "0x1"));
 
     await revertSnapshot(snapshot);
   });
 
-  /* Not being used for the time being
+  // /* Not being used for the time being
 
-        test('closeChannel happy path with hashlocks', async t => {
-            const snapshot = await takeSnapshot()
-            const eventLog = instance.allEvents()
+  test.only("closeChannel happy path with hashlocks", async t => {
+    const snapshot = await takeSnapshot();
+    const eventLog = instance.allEvents();
 
-            const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
-            const preimage1 = '0x2000000000000000000000000000000000000000000000000000000000000000'
-            const preimage2 = '0x3000000000000000000000000000000000000000000000000000000000000000'
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const preimage1 =
+      "0x2000000000000000000000000000000000000000000000000000000000000000";
+    const preimage2 =
+      "0x3000000000000000000000000000000000000000000000000000000000000000";
 
-            const string = 'newChannel'
+    const string = "newChannel";
 
-            await instance.submitPreimage(solSha3(preimage1), preimage1)
-            await instance.submitPreimage(solSha3(preimage2), preimage2)
+    await instance.submitPreimage(solSha3(preimage1), preimage1);
+    await instance.submitPreimage(solSha3(preimage2), preimage2);
 
-            await closeChannel(
-                instance,
-                string,
-                channelId,
-                `0x${solSha3(preimage1).slice(2)}${toSolInt256(-14)}${solSha3(preimage2).slice(2)}${toSolInt256(13)}`
-            )
+    await closeChannel(
+      instance,
+      string,
+      channelId,
+      `0x${solSha3(preimage1).slice(2)}${toSolInt256(-14)}${solSha3(
+        preimage2
+      ).slice(2)}${toSolInt256(13)}`
+    );
 
-            web3.eth.getBlock('latest', (err, block) => {
-                console.log("dododododo", err, block)
-            })
+    web3.eth.getBlock("latest", (err, block) => {
+      console.log("dododododo", err, block);
+    });
 
-            t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), '10')
-            t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), '14')
+    t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "10");
+    t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "14");
 
-            const logs = await p(eventLog.get.bind(eventLog))()
-            console.log('logs', filterLogs(logs).map(log => {
-                return Object.entries(log[1]).reduce((acc, [key, val]) => {
-                    acc[key] = val && val.toString()
-                    return acc
-                })
-            }))
-            eventLog.stopWatching()
+    const logs = await p(eventLog.get.bind(eventLog))();
+    console.log(
+      "logs",
+      filterLogs(logs).map(log => {
+        return Object.entries(log[1]).reduce((acc, [key, val]) => {
+          acc[key] = val && val.toString();
+          return acc;
+        });
+      })
+    );
+    eventLog.stopWatching();
 
-            await revertSnapshot(snapshot)
-        })
+    await revertSnapshot(snapshot);
+  });
 
-        test('closeChannel happy path with lots of hashlocks', async t => {
-            const snapshot = await takeSnapshot()
-            const eventLog = instance.allEvents()
+  test("closeChannel happy path with lots of hashlocks", async t => {
+    const snapshot = await takeSnapshot();
+    const eventLog = instance.allEvents();
 
-            const channelId = '0x1000000000000000000000000000000000000000000000000000000000000000'
-            const string = 'newChannel'
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const string = "newChannel";
 
-            let hashlocks = '0x'
-            let preimages = '0x'
-            let amount = 1
+    let hashlocks = "0x";
+    let preimages = "0x";
+    let amount = 1;
 
-            for (let i = 0; i < 100; i++) {
-                const preimage = solSha3(i);
+    for (let i = 0; i < 100; i++) {
+      const preimage = solSha3(i);
 
-                preimages = preimages + solSha3(preimage).slice(2) + preimage.slice(2)
-                hashlocks = hashlocks + preimage.slice(2) + toSolInt256(amount)
+      preimages = preimages + solSha3(preimage).slice(2) + preimage.slice(2);
+      hashlocks = hashlocks + preimage.slice(2) + toSolInt256(amount);
 
-                amount = -amount
-            }
+      amount = -amount;
+    }
 
-            await instance.submitPreimages(preimages)
+    await instance.submitPreimages(preimages);
 
-            web3.eth.getBlock('latest', (err, block) => {
-                console.log('submitPreimages', err, block)
-            })
+    web3.eth.getBlock("latest", (err, block) => {
+      console.log("submitPreimages", err, block);
+    });
 
-            await mineBlocks(1)
+    await mineBlocks(1);
 
-            await closeChannel(
-                instance,
-                string,
-                channelId,
-                hashlocks
-            )
+    await closeChannel(instance, string, channelId, hashlocks);
 
-            web3.eth.getBlock('latest', (err, block) => {
-                console.log('closeChannel', err, block)
-            })
+    web3.eth.getBlock("latest", (err, block) => {
+      console.log("closeChannel", err, block);
+    });
 
-            t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), '11')
-            t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), '13')
+    t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "11");
+    t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "13");
 
-            const logs = await p(eventLog.get.bind(eventLog))()
-            console.log('logs', filterLogs(logs).map(log => {
-                return Object.entries(log[1]).reduce((acc, [key, val]) => {
-                    acc[key] = val && val.toString()
-                    return acc
-                })
-            }))
-            eventLog.stopWatching()
+    const logs = await p(eventLog.get.bind(eventLog))();
+    console.log(
+      "logs",
+      filterLogs(logs).map(log => {
+        return Object.entries(log[1]).reduce((acc, [key, val]) => {
+          acc[key] = val && val.toString();
+          return acc;
+        });
+      })
+    );
+    eventLog.stopWatching();
 
-            await revertSnapshot(snapshot)
-        })*/
+    await revertSnapshot(snapshot);
+  });
 };

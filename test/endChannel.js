@@ -35,7 +35,7 @@ module.exports = async (test, instance) => {
     await createChannel(instance, string, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
-    t.shouldFail(
+    await t.shouldFail(
       endChannel(
         instance,
         "0x2000000000000000000000000000000000000000000000000000000000000000"
@@ -56,7 +56,7 @@ module.exports = async (test, instance) => {
 
     await endChannel(instance, channelId);
 
-    t.shouldFail(endChannel(instance, channelId));
+    await t.shouldFail(endChannel(instance, channelId));
 
     await revertSnapshot(snapshot);
   });
@@ -71,7 +71,7 @@ module.exports = async (test, instance) => {
     await createChannel(instance, string, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
-    t.shouldFail(
+    await t.shouldFail(
       instance.endChannel(
         channelId,
         sign(endChannelFingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"))
@@ -91,7 +91,7 @@ module.exports = async (test, instance) => {
     await createChannel(instance, string, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
-    t.shouldFail(
+    await t.shouldFail(
       instance.endChannel(
         channelId,
         sign(endChannelFingerprint, new Buffer(ACCT_2_PRIVKEY, "hex"))

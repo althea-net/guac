@@ -60,7 +60,7 @@ module.exports = async (test, instance) => {
   test("newChannel bad sig", async t => {
     const snapshot = await takeSnapshot();
     const channelId =
-      "0x1100000000000000000000000000000000000000000000000000000000000000";
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel derp";
 
     await t.shouldFail(createChannel(instance, string, channelId, 6, 6, 2));
@@ -70,7 +70,7 @@ module.exports = async (test, instance) => {
   test("newChannel bad amount", async t => {
     const snapshot = await takeSnapshot();
     const channelId =
-      "0x1200000000000000000000000000000000000000000000000000000000000000";
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel";
 
     await t.shouldFail(createChannel(instance, string, channelId, 6, 13, 2));
@@ -80,7 +80,7 @@ module.exports = async (test, instance) => {
   test("newChannel already exists", async t => {
     const snapshot = await takeSnapshot();
     const channelId =
-      "0x1300000000000000000000000000000000000000000000000000000000000000";
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel";
 
     await createChannel(instance, string, channelId, 6, 6, 2);
@@ -92,7 +92,7 @@ module.exports = async (test, instance) => {
   test("newChannel wrong private key", async t => {
     const snapshot = await takeSnapshot();
     const channelId =
-      "0x1400000000000000000000000000000000000000000000000000000000000000";
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel";
 
     await instance.mint(ACCT_0_ADDR, 12);
@@ -129,7 +129,7 @@ module.exports = async (test, instance) => {
   test("newChannel wrong public key", async t => {
     const snapshot = await takeSnapshot();
     const channelId =
-      "0x1500000000000000000000000000000000000000000000000000000000000000";
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
     const string = "newChannel";
 
     await instance.mint(ACCT_0_ADDR, 12);

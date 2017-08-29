@@ -76,7 +76,7 @@ module.exports = async (test, instance) => {
 
     await createChannel(instance, string, channelId, 6, 6, 2);
 
-    t.shouldFail(
+    await t.shouldFail(
       updateState(
         instance,
         "0x2000000000000000000000000000000000000000000000000000000000000000",
@@ -100,10 +100,7 @@ module.exports = async (test, instance) => {
     await endChannel(instance, channelId);
     await mineBlocks(5);
 
-    t.shouldFail(updateState(instance, channelId, 1, 5, 7, "0x"));
-
-    // await updateState(instance, channelId, 1, 5, 7, "0x");
-    // t.shouldFail(endChannel(instance, channelId));
+    await t.shouldFail(updateState(instance, channelId, 1, 5, 7, "0x"));
 
     await revertSnapshot(snapshot);
   });
@@ -117,7 +114,7 @@ module.exports = async (test, instance) => {
     await createChannel(instance, string, channelId, 6, 6, 2);
     await updateState(instance, channelId, 3, 5, 7, "0x");
 
-    t.shouldFail(updateState(instance, channelId, 2, 5, 7, "0x"));
+    await t.shouldFail(updateState(instance, channelId, 2, 5, 7, "0x"));
 
     await revertSnapshot(snapshot);
   });
@@ -130,7 +127,7 @@ module.exports = async (test, instance) => {
 
     await createChannel(instance, string, channelId, 6, 6, 2);
 
-    t.shouldFail(updateState(instance, channelId, 1, 7, 6, "0x"));
+    await t.shouldFail(updateState(instance, channelId, 1, 7, 6, "0x"));
 
     await revertSnapshot(snapshot);
   });
@@ -143,7 +140,7 @@ module.exports = async (test, instance) => {
 
     await createChannel(instance, string, channelId, 6, 6, 2);
 
-    t.shouldFail(updateState(instance, channelId, 1, 6, 5, "0x"));
+    await t.shouldFail(updateState(instance, channelId, 1, 6, 5, "0x"));
 
     await revertSnapshot(snapshot);
   });
@@ -176,7 +173,7 @@ module.exports = async (test, instance) => {
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
     const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
 
-    t.shouldFail(
+    await t.shouldFail(
       instance.updateState(
         channelId,
         sequenceNumber,
@@ -219,7 +216,7 @@ module.exports = async (test, instance) => {
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
     const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
 
-    t.shouldFail(
+    await t.shouldFail(
       instance.updateState(
         channelId,
         sequenceNumber,
@@ -262,7 +259,7 @@ module.exports = async (test, instance) => {
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
     const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
 
-    t.shouldFail(
+    await t.shouldFail(
       instance.updateState(
         channelId,
         sequenceNumber,
@@ -305,7 +302,7 @@ module.exports = async (test, instance) => {
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
     const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
 
-    t.shouldFail(
+    await t.shouldFail(
       instance.updateState(
         channelId,
         sequenceNumber,
@@ -348,7 +345,7 @@ module.exports = async (test, instance) => {
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
     const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
 
-    t.shouldFail(
+    await t.shouldFail(
       instance.updateState(
         channelId,
         sequenceNumber,
@@ -391,7 +388,7 @@ module.exports = async (test, instance) => {
     const signature0 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
     const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
 
-    t.shouldFail(
+    await t.shouldFail(
       instance.updateState(
         channelId,
         sequenceNumber,
@@ -434,7 +431,7 @@ module.exports = async (test, instance) => {
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
     const signature1 = sign(fingerprint, new Buffer(ACCT_2_PRIVKEY, "hex"));
 
-    t.shouldFail(
+    await t.shouldFail(
       instance.updateState(
         channelId,
         sequenceNumber,
