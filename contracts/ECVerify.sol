@@ -21,9 +21,6 @@ pragma solidity ^0.4.11;
 //
 
 contract ECVerify {
-    event LogNum(uint8 num);
-    event LogNum256(uint256 num);
-    event LogBool(bool b);
     function ecrecovery(bytes32 hash, bytes sig) returns (address) {
         bytes32 r;
         bytes32 s;

@@ -116,7 +116,7 @@ module.exports = async (test, instance) => {
 
   // /* Not being used for the time being
 
-  test.only("closeChannel happy path with hashlocks", async t => {
+  test("closeChannel happy path with hashlocks", async t => {
     const snapshot = await takeSnapshot();
     const eventLog = instance.allEvents();
 
@@ -132,18 +132,18 @@ module.exports = async (test, instance) => {
     await instance.submitPreimage(solSha3(preimage1), preimage1);
     await instance.submitPreimage(solSha3(preimage2), preimage2);
 
+    // It doesn't matter if the adjustments in the hashlocks exceed the balances
+    // in the channel individually as long as they add up to a totalAdjustment
+    // that doesn't exceed the balances in the channel
+    const hashlock1 = `${solSha3(preimage1).slice(2)}${toSolInt256(-10002)}`;
+    const hashlock2 = `${solSha3(preimage2).slice(2)}${toSolInt256(10001)}`;
+
     await closeChannel(
       instance,
       string,
       channelId,
-      `0x${solSha3(preimage1).slice(2)}${toSolInt256(-14)}${solSha3(
-        preimage2
-      ).slice(2)}${toSolInt256(13)}`
+      `0x${hashlock1}${hashlock2}`
     );
-
-    web3.eth.getBlock("latest", (err, block) => {
-      console.log("dododododo", err, block);
-    });
 
     t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "10");
     t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "14");
