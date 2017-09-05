@@ -36,22 +36,17 @@ module.exports = async (test, instance) => {
       JSON.parse(JSON.stringify(await instance.channels(channelId))),
       [
         "0x1000000000000000000000000000000000000000000000000000000000000000",
-
         "0xa09bd41a9f1d469fca7b3f82a579b855dd6b279d",
         "0x25e27882eeb2159ad3164ed2622241740dfe0528",
-
-        false,
-        false,
-
-        "2",
-        "0",
-
-        "6",
-        "6",
         "12",
-
+        "6",
+        "6",
         "0x",
-        "0"
+        "0",
+        "2",
+        false,
+        "0",
+        false
       ]
     );
     await revertSnapshot(snapshot);

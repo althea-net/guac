@@ -41,27 +41,20 @@ module.exports = async (test, instance) => {
       JSON.parse(JSON.stringify(await instance.channels(channelId))),
       [
         channelId,
-
         "0xa09bd41a9f1d469fca7b3f82a579b855dd6b279d",
         "0x25e27882eeb2159ad3164ed2622241740dfe0528",
-
-        false,
-        false,
-
-        "2",
-        "0",
-
+        "12",
         "5",
         "7",
-        "12",
-
         "0x",
-        "1"
+        "1",
+        "2",
+        false,
+        "0",
+        false
       ]
     );
 
-    const logs = await p(eventLog.get.bind(eventLog))();
-    console.log("logs", filterLogs(logs));
     eventLog.stopWatching();
 
     await revertSnapshot(snapshot);

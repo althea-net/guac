@@ -4,7 +4,22 @@ import "zeppelin-solidity/contracts/token/MintableToken.sol";
 
 
 contract PaymentChannels is ECVerify, MintableToken {
-    event NewChannel(bytes32 channelId);
+    struct Channel {
+        bytes32 channelId;
+        address address0;
+        address address1;
+        uint256 totalBalance;
+
+        uint256 balance0;
+        uint256 balance1;
+        bytes hashlocks;
+        uint256 sequenceNumber;
+
+        uint256 settlingPeriod;
+        bool ended;
+        uint256 settlingBlock;
+        bool closed;
+    }
 
     mapping (bytes32 => Channel) public channels;
     mapping (bytes32 => bool) seenPreimage;
@@ -90,24 +105,7 @@ contract PaymentChannels is ECVerify, MintableToken {
         balances[_addr] = balances[_addr].sub(_value);
     }
 
-    struct Channel {
-        bytes32 channelId;
-        address address0;
-        address address1;
-
-        bool ended;
-        bool closed;
-        uint256 settlingPeriod;
-        uint256 settlingBlock;
-
-        uint256 balance0;
-        uint256 balance1;
-        uint256 totalBalance;
-
-        bytes hashlocks;
-
-        uint256 sequenceNumber;
-    }
+    event NewChannel(bytes32 channelId);
 
     function newChannel(
         bytes32 _channelId,
@@ -152,19 +150,18 @@ contract PaymentChannels is ECVerify, MintableToken {
             _channelId,                  // bytes32 channelId;
             _address0,                   // address address0;
             _address1,                   // address address1;
+            _balance0.add(_balance1),    // uint256 totalBalance;
             
-            false,                       // bool ended;
-            false,                       // bool closed;
-            _settlingPeriod,            // uint256 settlingPeriod;
-            0,                           // uint256 settlingBlock;
-
             _balance0,                   // uint256 balance0;
             _balance1,                   // uint256 balance1;
-            _balance0.add(_balance1),    // uint256 totalBalance;
-
             new bytes(0),                // bytes hashlocks
+            0,                           // uint256 sequenceNumber;
 
-            0                            // uint256 sequenceNumber;
+            _settlingPeriod,             // uint256 settlingPeriod;
+            false,                       // bool ended;
+            0,                           // uint256 settlingBlock;
+            false                        // bool closed;
+
         );
 
         NewChannel(_channelId);
@@ -285,6 +282,31 @@ contract PaymentChannels is ECVerify, MintableToken {
 
         incrementBalance(channels[_channelId].address0, balance0);
         incrementBalance(channels[_channelId].address1, balance1);
+    }
+
+    function closeChannelFast (
+        bytes32 _channelId,
+        bytes _signature0,
+        bytes _signature1
+    ) {
+        channelExists(_channelId);
+
+        bytes32 fingerprint = sha3(
+            "closeChannelFast",
+            _channelId
+        );
+
+        signedByBoth(
+            fingerprint,
+            _signature0,
+            _signature1,
+            channels[_channelId].address0,
+            channels[_channelId].address1
+        );
+
+        channels[_channelId].ended = true;
+        channels[_channelId].settlingBlock = block.number;
+        closeChannel(_channelId);
     }
 
     function getHashlockAdjustment (

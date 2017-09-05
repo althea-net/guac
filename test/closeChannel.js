@@ -28,7 +28,7 @@ const {
 module.exports = async (test, instance) => {
   test("closeChannel happy path no hashlocks", async t => {
     const snapshot = await takeSnapshot();
-    const eventLog = instance.allEvents();
+    // const eventLog = instance.allEvents();
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
@@ -36,24 +36,20 @@ module.exports = async (test, instance) => {
 
     await closeChannel(instance, string, channelId, "0x");
 
-    web3.eth.getBlock("latest", (err, block) => {
-      console.log("dododododo", err, block);
-    });
-
     t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "11");
     t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "13");
 
-    const logs = await p(eventLog.get.bind(eventLog))();
-    console.log(
-      "logs",
-      filterLogs(logs).map(log => {
-        return Object.entries(log[1]).reduce((acc, [key, val]) => {
-          acc[key] = val && val.toString();
-          return acc;
-        });
-      })
-    );
-    eventLog.stopWatching();
+    // const logs = await p(eventLog.get.bind(eventLog))();
+    // console.log(
+    //   "logs",
+    //   filterLogs(logs).map(log => {
+    //     return Object.entries(log[1]).reduce((acc, [key, val]) => {
+    //       acc[key] = val && val.toString();
+    //       return acc;
+    //     });
+    //   })
+    // );
+    // eventLog.stopWatching();
 
     await revertSnapshot(snapshot);
   });
@@ -114,11 +110,9 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  // /* Not being used for the time being
-
   test("closeChannel happy path with hashlocks", async t => {
     const snapshot = await takeSnapshot();
-    const eventLog = instance.allEvents();
+    // const eventLog = instance.allEvents();
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
@@ -148,24 +142,24 @@ module.exports = async (test, instance) => {
     t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "10");
     t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "14");
 
-    const logs = await p(eventLog.get.bind(eventLog))();
-    console.log(
-      "logs",
-      filterLogs(logs).map(log => {
-        return Object.entries(log[1]).reduce((acc, [key, val]) => {
-          acc[key] = val && val.toString();
-          return acc;
-        });
-      })
-    );
-    eventLog.stopWatching();
+    // const logs = await p(eventLog.get.bind(eventLog))();
+    // console.log(
+    //   "logs",
+    //   filterLogs(logs).map(log => {
+    //     return Object.entries(log[1]).reduce((acc, [key, val]) => {
+    //       acc[key] = val && val.toString();
+    //       return acc;
+    //     });
+    //   })
+    // );
+    // eventLog.stopWatching();
 
     await revertSnapshot(snapshot);
   });
 
   test("closeChannel happy path with lots of hashlocks", async t => {
     const snapshot = await takeSnapshot();
-    const eventLog = instance.allEvents();
+    // const eventLog = instance.allEvents();
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
@@ -186,32 +180,24 @@ module.exports = async (test, instance) => {
 
     await instance.submitPreimages(preimages);
 
-    web3.eth.getBlock("latest", (err, block) => {
-      console.log("submitPreimages", err, block);
-    });
-
     await mineBlocks(1);
 
     await closeChannel(instance, string, channelId, hashlocks);
 
-    web3.eth.getBlock("latest", (err, block) => {
-      console.log("closeChannel", err, block);
-    });
-
     t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "11");
     t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "13");
 
-    const logs = await p(eventLog.get.bind(eventLog))();
-    console.log(
-      "logs",
-      filterLogs(logs).map(log => {
-        return Object.entries(log[1]).reduce((acc, [key, val]) => {
-          acc[key] = val && val.toString();
-          return acc;
-        });
-      })
-    );
-    eventLog.stopWatching();
+    // const logs = await p(eventLog.get.bind(eventLog))();
+    // console.log(
+    //   "logs",
+    //   filterLogs(logs).map(log => {
+    //     return Object.entries(log[1]).reduce((acc, [key, val]) => {
+    //       acc[key] = val && val.toString();
+    //       return acc;
+    //     });
+    //   })
+    // );
+    // eventLog.stopWatching();
 
     await revertSnapshot(snapshot);
   });
