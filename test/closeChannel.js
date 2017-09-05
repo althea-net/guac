@@ -28,7 +28,6 @@ const {
 module.exports = async (test, instance) => {
   test("closeChannel happy path no hashlocks", async t => {
     const snapshot = await takeSnapshot();
-    // const eventLog = instance.allEvents();
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
@@ -37,18 +36,6 @@ module.exports = async (test, instance) => {
 
     t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "11");
     t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "13");
-
-    // const logs = await p(eventLog.get.bind(eventLog))();
-    // console.log(
-    //   "logs",
-    //   filterLogs(logs).map(log => {
-    //     return Object.entries(log[1]).reduce((acc, [key, val]) => {
-    //       acc[key] = val && val.toString();
-    //       return acc;
-    //     });
-    //   })
-    // );
-    // eventLog.stopWatching();
 
     await revertSnapshot(snapshot);
   });
@@ -185,6 +172,62 @@ module.exports = async (test, instance) => {
     //   })
     // );
     // eventLog.stopWatching();
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("closeChannelFast happy path no hashlocks", async t => {
+    const snapshot = await takeSnapshot();
+
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+
+    await createChannel(instance, channelId, 6, 6, 2);
+    await updateState(instance, channelId, 1, 5, 7, "0x");
+    const fingerprint = solSha3("closeChannelFast", channelId);
+
+    await instance.closeChannelFast(
+      channelId,
+      sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex")),
+      sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"))
+    );
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("closeChannelFast nonexistant channel", async t => {
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+
+    const fingerprint = solSha3("closeChannelFast", channelId);
+
+    await t.shouldFail(
+      instance.closeChannelFast(
+        channelId,
+        sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex")),
+        sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"))
+      )
+    );
+  });
+
+  test("closeChannelFast bad sig", async t => {
+    const snapshot = await takeSnapshot();
+
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+
+    await createChannel(instance, channelId, 6, 6, 2);
+    await updateState(instance, channelId, 1, 5, 7, "0x");
+
+    const fingerprint = solSha3("closeChannelFast derp", channelId);
+
+    await t.shouldFail(
+      instance.closeChannelFast(
+        channelId,
+        sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex")),
+        sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"))
+      )
+    );
 
     await revertSnapshot(snapshot);
   });
