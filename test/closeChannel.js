@@ -32,9 +32,8 @@ module.exports = async (test, instance) => {
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
-    await closeChannel(instance, string, channelId, "0x");
+    await closeChannel(instance, channelId, "0x");
 
     t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "11");
     t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "13");
@@ -60,9 +59,8 @@ module.exports = async (test, instance) => {
       "0x1000000000000000000000000000000000000000000000000000000000000000";
     const channelIdFake =
       "0x2000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7, "0x");
     await endChannel(instance, channelId);
     await mineBlocks(5);
@@ -76,9 +74,8 @@ module.exports = async (test, instance) => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
     await t.shouldFail(instance.closeChannel(channelId));
@@ -90,11 +87,10 @@ module.exports = async (test, instance) => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
-    await closeChannel(instance, string, channelId, "0x");
+    await closeChannel(instance, channelId, "0x");
 
-    await t.shouldFail(closeChannel(instance, string, channelId, "0x"));
+    await t.shouldFail(closeChannel(instance, channelId, "0x"));
 
     await revertSnapshot(snapshot);
   });
@@ -103,9 +99,8 @@ module.exports = async (test, instance) => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
-    await t.shouldFail(closeChannel(instance, string, channelId, "0x1"));
+    await t.shouldFail(closeChannel(instance, channelId, "0x1"));
 
     await revertSnapshot(snapshot);
   });
@@ -121,8 +116,6 @@ module.exports = async (test, instance) => {
     const preimage2 =
       "0x3000000000000000000000000000000000000000000000000000000000000000";
 
-    const string = "newChannel";
-
     await instance.submitPreimage(solSha3(preimage1), preimage1);
     await instance.submitPreimage(solSha3(preimage2), preimage2);
 
@@ -132,12 +125,7 @@ module.exports = async (test, instance) => {
     const hashlock1 = `${solSha3(preimage1).slice(2)}${toSolInt256(-10002)}`;
     const hashlock2 = `${solSha3(preimage2).slice(2)}${toSolInt256(10001)}`;
 
-    await closeChannel(
-      instance,
-      string,
-      channelId,
-      `0x${hashlock1}${hashlock2}`
-    );
+    await closeChannel(instance, channelId, `0x${hashlock1}${hashlock2}`);
 
     t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "10");
     t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "14");
@@ -163,7 +151,6 @@ module.exports = async (test, instance) => {
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
     let hashlocks = "0x";
     let preimages = "0x";
@@ -182,7 +169,7 @@ module.exports = async (test, instance) => {
 
     await mineBlocks(1);
 
-    await closeChannel(instance, string, channelId, hashlocks);
+    await closeChannel(instance, channelId, hashlocks);
 
     t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "11");
     t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "13");

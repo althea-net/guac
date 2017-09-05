@@ -31,9 +31,8 @@ module.exports = async (test, instance) => {
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
 
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
@@ -65,9 +64,8 @@ module.exports = async (test, instance) => {
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
 
     await t.shouldFail(
       updateState(
@@ -87,9 +85,8 @@ module.exports = async (test, instance) => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
     await endChannel(instance, channelId);
     await mineBlocks(5);
 
@@ -102,9 +99,8 @@ module.exports = async (test, instance) => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
     await updateState(instance, channelId, 3, 5, 7, "0x");
 
     await t.shouldFail(updateState(instance, channelId, 2, 5, 7, "0x"));
@@ -116,9 +112,8 @@ module.exports = async (test, instance) => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
 
     await t.shouldFail(updateState(instance, channelId, 1, 7, 6, "0x"));
 
@@ -129,9 +124,8 @@ module.exports = async (test, instance) => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
 
     await t.shouldFail(updateState(instance, channelId, 1, 6, 5, "0x"));
 
@@ -143,7 +137,6 @@ module.exports = async (test, instance) => {
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
     const sequenceNumber = 1;
 
@@ -152,7 +145,7 @@ module.exports = async (test, instance) => {
 
     const hashlocks = "0x";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
 
     const fingerprint = solSha3(
       "updateState derp",
@@ -186,7 +179,6 @@ module.exports = async (test, instance) => {
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
     const sequenceNumber = 1;
 
@@ -195,7 +187,7 @@ module.exports = async (test, instance) => {
 
     const hashlocks = "0x";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
 
     const fingerprint = solSha3(
       "updateState",
@@ -229,7 +221,6 @@ module.exports = async (test, instance) => {
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
     const sequenceNumber = 1;
 
@@ -238,7 +229,7 @@ module.exports = async (test, instance) => {
 
     const hashlocks = "0x";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
 
     const fingerprint = solSha3(
       "updateState",
@@ -272,7 +263,6 @@ module.exports = async (test, instance) => {
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
     const sequenceNumber = 1;
 
@@ -281,7 +271,7 @@ module.exports = async (test, instance) => {
 
     const hashlocks = "0x";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
 
     const fingerprint = solSha3(
       "updateState",
@@ -315,7 +305,6 @@ module.exports = async (test, instance) => {
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
     const sequenceNumber = 1;
 
@@ -324,7 +313,7 @@ module.exports = async (test, instance) => {
 
     const hashlocks = "0x";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
 
     const fingerprint = solSha3(
       "updateState",
@@ -358,7 +347,6 @@ module.exports = async (test, instance) => {
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
     const sequenceNumber = 1;
 
@@ -367,7 +355,7 @@ module.exports = async (test, instance) => {
 
     const hashlocks = "0x";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
 
     const fingerprint = solSha3(
       "updateState",
@@ -401,7 +389,6 @@ module.exports = async (test, instance) => {
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
     const sequenceNumber = 1;
 
@@ -410,7 +397,7 @@ module.exports = async (test, instance) => {
 
     const hashlocks = "0x";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
 
     const fingerprint = solSha3(
       "updateState",

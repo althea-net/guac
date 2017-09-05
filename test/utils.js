@@ -122,11 +122,11 @@ function filterLogs(logs) {
 
 async function createChannel(
   instance,
-  string,
   channelId,
   balance0,
   balance1,
-  settlingPeriod
+  settlingPeriod,
+  string = "newChannel"
 ) {
   await instance.mint(ACCT_0_ADDR, 12);
   await instance.mint(ACCT_1_ADDR, 12);
@@ -196,8 +196,8 @@ async function endChannel(instance, channelId) {
   );
 }
 
-async function closeChannel(instance, string, channelId, hashlocks) {
-  await createChannel(instance, string, channelId, 6, 6, 2);
+async function closeChannel(instance, channelId, hashlocks) {
+  await createChannel(instance, channelId, 6, 6, 2);
   await updateState(instance, channelId, 1, 5, 7, hashlocks);
   await endChannel(instance, channelId);
   await mineBlocks(5);

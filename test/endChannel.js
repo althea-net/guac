@@ -30,9 +30,8 @@ module.exports = async (test, instance) => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
     await t.shouldFail(
@@ -49,9 +48,8 @@ module.exports = async (test, instance) => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
     await endChannel(instance, channelId);
@@ -65,10 +63,10 @@ module.exports = async (test, instance) => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
+
     const endChannelFingerprint = solSha3("endChannel derp", channelId);
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
     await t.shouldFail(
@@ -85,10 +83,9 @@ module.exports = async (test, instance) => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const string = "newChannel";
     const endChannelFingerprint = solSha3("endChannel", channelId);
 
-    await createChannel(instance, string, channelId, 6, 6, 2);
+    await createChannel(instance, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
     await t.shouldFail(
