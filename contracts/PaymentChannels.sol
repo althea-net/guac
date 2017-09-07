@@ -4,6 +4,10 @@ import "zeppelin-solidity/contracts/token/MintableToken.sol";
 
 
 contract PaymentChannels is ECVerify, MintableToken {
+    event NewChannel(bytes32 channelId);
+    event SawPreimage(bytes32 hashed, bytes32 preimage);
+    event AppliedHashlock(bytes32 hashed, int256 adjustment);
+
     struct Channel {
         bytes32 channelId;
         address address0;
@@ -105,8 +109,6 @@ contract PaymentChannels is ECVerify, MintableToken {
         balances[_addr] = balances[_addr].sub(_value);
     }
 
-    event NewChannel(bytes32 channelId);
-
     function newChannel(
         bytes32 _channelId,
 
@@ -182,7 +184,7 @@ contract PaymentChannels is ECVerify, MintableToken {
         channelExists(_channelId);
         channelIsNotSettled(_channelId);
         sequenceNumberIsHighest(_channelId, _sequenceNumber);
-        balancesEqualTotal(_channelId, _balance0, _balance1); // Might not be neccesary, but maybe want it anyway
+        balancesEqualTotal(_channelId, _balance0, _balance1);
 
         bytes32 fingerprint = sha3(
             "updateState",
@@ -201,10 +203,41 @@ contract PaymentChannels is ECVerify, MintableToken {
             channels[_channelId].address1
         );
 
+        updateStateInternal(
+            _channelId,
+            _sequenceNumber,
+
+            _balance0,
+            _balance1,
+
+            _hashlocks
+        );
+    }
+
+    function updateStateInternal (
+        bytes32 _channelId,
+        uint256 _sequenceNumber,
+
+        uint256 _balance0,
+        uint256 _balance1,
+
+        bytes _hashlocks
+    )
+        internal
+    {
         channels[_channelId].sequenceNumber = _sequenceNumber;
         channels[_channelId].balance0 = _balance0;
         channels[_channelId].balance1 = _balance1;
         channels[_channelId].hashlocks = _hashlocks;
+    }
+
+    function submitPreimage (
+        bytes32 _hashed,
+        bytes32 _preimage
+    ) {
+        require(_hashed == sha3(_preimage));
+        seenPreimage[_hashed] = true;
+        SawPreimage(_hashed, _preimage);
     }
 
     function submitPreimages (
@@ -225,17 +258,6 @@ contract PaymentChannels is ECVerify, MintableToken {
             submitPreimage(hashed, preimage);
         }
     }
-
-    function submitPreimage (
-        bytes32 _hashed,
-        bytes32 _preimage
-    ) {
-        require(_hashed == sha3(_preimage));
-        seenPreimage[_hashed] = true;
-        SawPreimage(_hashed, _preimage);
-    }
-
-    event SawPreimage(bytes32 hashed, bytes32 preimage);
 
     function endChannel (
         bytes32 _channelId,
@@ -267,6 +289,57 @@ contract PaymentChannels is ECVerify, MintableToken {
         channelIsSettled(_channelId);
         channelIsNotClosed(_channelId);
 
+        closeChannelInternal(_channelId);
+    }
+
+    function closeChannelFast (
+        bytes32 _channelId,
+
+        uint256 _sequenceNumber,
+        uint256 _balance0,
+        uint256 _balance1,
+        bytes _hashlocks,
+
+        bytes _signature0,
+        bytes _signature1
+    ) {
+        channelExists(_channelId);
+        sequenceNumberIsHighest(_channelId, _sequenceNumber);
+        balancesEqualTotal(_channelId, _balance0, _balance1);
+
+        bytes32 fingerprint = sha3(
+            "closeChannelFast",
+            _channelId,
+            _sequenceNumber,
+            _balance0,
+            _balance1,
+            _hashlocks
+        );
+
+        signedByBoth(
+            fingerprint,
+            _signature0,
+            _signature1,
+            channels[_channelId].address0,
+            channels[_channelId].address1
+        );
+
+        updateStateInternal(
+            _channelId,
+            _sequenceNumber,
+            _balance0,
+            _balance1,
+            _hashlocks
+        );
+
+        closeChannelInternal(_channelId);
+    }
+
+    function closeChannelInternal (
+        bytes32 _channelId
+    )
+        internal
+    {
         channels[_channelId].closed = true;
 
         int256 adjustment = getHashlockAdjustment(channels[_channelId].hashlocks);
@@ -282,31 +355,6 @@ contract PaymentChannels is ECVerify, MintableToken {
 
         incrementBalance(channels[_channelId].address0, balance0);
         incrementBalance(channels[_channelId].address1, balance1);
-    }
-
-    function closeChannelFast (
-        bytes32 _channelId,
-        bytes _signature0,
-        bytes _signature1
-    ) {
-        channelExists(_channelId);
-
-        bytes32 fingerprint = sha3(
-            "closeChannelFast",
-            _channelId
-        );
-
-        signedByBoth(
-            fingerprint,
-            _signature0,
-            _signature1,
-            channels[_channelId].address0,
-            channels[_channelId].address1
-        );
-
-        channels[_channelId].ended = true;
-        channels[_channelId].settlingBlock = block.number;
-        closeChannel(_channelId);
     }
 
     function getHashlockAdjustment (
@@ -336,8 +384,6 @@ contract PaymentChannels is ECVerify, MintableToken {
 
         return totalAdjustment;
     }
-
-    event AppliedHashlock(bytes32 hashed, int256 adjustment);
 
     function applyHashlockAdjustment (
         bytes32 _channelId,

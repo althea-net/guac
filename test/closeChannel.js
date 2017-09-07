@@ -183,14 +183,21 @@ module.exports = async (test, instance) => {
       "0x1000000000000000000000000000000000000000000000000000000000000000";
 
     await createChannel(instance, channelId, 6, 6, 2);
-    await updateState(instance, channelId, 1, 5, 7, "0x");
-    const fingerprint = solSha3("closeChannelFast", channelId);
+
+    const fingerprint = solSha3("closeChannelFast", channelId, 1, 5, 7, "0x");
 
     await instance.closeChannelFast(
       channelId,
+      1,
+      5,
+      7,
+      "0x",
       sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex")),
       sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"))
     );
+
+    t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "11");
+    t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "13");
 
     await revertSnapshot(snapshot);
   });
@@ -204,6 +211,10 @@ module.exports = async (test, instance) => {
     await t.shouldFail(
       instance.closeChannelFast(
         channelId,
+        1,
+        5,
+        7,
+        "0x",
         sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex")),
         sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"))
       )
@@ -217,13 +228,23 @@ module.exports = async (test, instance) => {
       "0x1000000000000000000000000000000000000000000000000000000000000000";
 
     await createChannel(instance, channelId, 6, 6, 2);
-    await updateState(instance, channelId, 1, 5, 7, "0x");
 
-    const fingerprint = solSha3("closeChannelFast derp", channelId);
+    const fingerprint = solSha3(
+      "closeChannelFast derp",
+      channelId,
+      1,
+      5,
+      7,
+      "0x"
+    );
 
     await t.shouldFail(
       instance.closeChannelFast(
         channelId,
+        1,
+        5,
+        7,
+        "0x",
         sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex")),
         sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"))
       )
