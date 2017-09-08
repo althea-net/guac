@@ -8,8 +8,6 @@ contract PaymentChannels is ECVerify, MintableToken {
     event SawPreimage(bytes32 hashed, bytes32 preimage);
     event AppliedHashlock(bytes32 hashed, int256 adjustment);
 
-    enum MyEnum { Open, Settling, Closed }
-
     struct Channel {
         bytes32 channelId;
         address address0;
