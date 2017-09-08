@@ -36,6 +36,10 @@ contract PaymentChannels is ECVerify, MintableToken {
         require(channels[_channelId].channelId == _channelId);
     }
 
+    function channelIsEnded (bytes32 _channelId) {
+        require(channels[_channelId].ended);
+    }
+
     function channelIsNotEnded (bytes32 _channelId) {
         require(!channels[_channelId].ended);
     }
@@ -52,7 +56,7 @@ contract PaymentChannels is ECVerify, MintableToken {
     }
 
     function channelIsNotSettled (bytes32 _channelId) {
-        require(!(
+        require(!( // Negate the below
             channels[_channelId].ended && // If the channel is ended
             block.number >= channels[_channelId].settlingBlock // And the settling block has happened
         ));
@@ -64,6 +68,14 @@ contract PaymentChannels is ECVerify, MintableToken {
 
     function sequenceNumberIsHighest (bytes32 _channelId, uint256 _sequenceNumber) {
         require(_sequenceNumber > channels[_channelId].sequenceNumber);
+    }
+
+    function signedBy (
+        bytes32 _fingerprint,
+        bytes _signature,
+        address _address
+    ) {
+        require(ecverify(_fingerprint, _signature, _address));
     }
 
     function signedByBoth (
@@ -91,21 +103,15 @@ contract PaymentChannels is ECVerify, MintableToken {
         );
     }
 
-    function abs(int256 _num)
-        returns (int256)
+    function incrementBalance(address _addr, uint _value)
+        internal
     {
-        if (_num < 0) {
-            return -_num;
-        } else {
-            return _num;
-        }
-    }
-
-    function incrementBalance(address _addr, uint _value) internal {
         balances[_addr] = balances[_addr].add(_value);
     }
 
-    function decrementBalance(address _addr, uint _value) internal {
+    function decrementBalance(address _addr, uint _value)
+        internal
+    {
         balances[_addr] = balances[_addr].sub(_value);
     }
 
@@ -211,6 +217,55 @@ contract PaymentChannels is ECVerify, MintableToken {
             _balance1,
 
             _hashlocks
+        );
+    }
+
+    function updateStateWithBounty(
+        bytes32 _channelId,
+        uint256 _sequenceNumber,
+
+        uint256 _balance0,
+        uint256 _balance1,
+
+        bytes _hashlocks,
+
+        bytes _signature0,
+        bytes _signature1,
+
+        address _bountyPayer,
+        uint256 _bountyAmount,
+        bytes _bountySignature
+    ) {
+        channelIsEnded(_channelId);
+
+        bytes32 fingerprint = sha3(
+            "updateStateWithBounty",
+            _channelId,
+            _sequenceNumber,
+            _balance0,
+            _balance1,
+            _hashlocks,
+            _signature0,
+            _signature1,
+            _bountyPayer,
+            _bountyAmount
+        );
+
+        signedBy(fingerprint, _bountySignature, _bountyPayer);
+        decrementBalance(_bountyPayer, _bountyAmount);
+        incrementBalance(msg.caller, _bountyAmount);
+
+        updateState(
+            _channelId,
+            _sequenceNumber,
+
+            _balance0,
+            _balance1,
+
+            _hashlocks,
+
+            _signature0,
+            _signature1
         );
     }
 
@@ -403,8 +458,8 @@ contract PaymentChannels is ECVerify, MintableToken {
         }
 
         if (_totalAdjustment < 0) {
-            balance0 = _currentBalance0.sub(uint256(abs(_totalAdjustment)));
-            balance1 = _currentBalance1.add(uint256(abs(_totalAdjustment)));
+            balance0 = _currentBalance0.sub(uint256(-_totalAdjustment));
+            balance1 = _currentBalance1.add(uint256(_totalAdjustment));
         }
 
         if (_totalAdjustment == 0) {
