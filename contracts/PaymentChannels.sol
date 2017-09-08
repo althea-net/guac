@@ -253,7 +253,7 @@ contract PaymentChannels is ECVerify, MintableToken {
 
         signedBy(fingerprint, _bountySignature, _bountyPayer);
         decrementBalance(_bountyPayer, _bountyAmount);
-        incrementBalance(msg.caller, _bountyAmount);
+        incrementBalance(msg.sender, _bountyAmount);
 
         updateState(
             _channelId,
@@ -459,7 +459,7 @@ contract PaymentChannels is ECVerify, MintableToken {
 
         if (_totalAdjustment < 0) {
             balance0 = _currentBalance0.sub(uint256(-_totalAdjustment));
-            balance1 = _currentBalance1.add(uint256(_totalAdjustment));
+            balance1 = _currentBalance1.add(uint256(-_totalAdjustment));
         }
 
         if (_totalAdjustment == 0) {
@@ -467,7 +467,7 @@ contract PaymentChannels is ECVerify, MintableToken {
             balance1 = _currentBalance1;
         }
 
-        // balancesEqualTotal(_channelId, balance0, balance1);
+        balancesEqualTotal(_channelId, balance0, balance1);
         return (balance0, balance1);
     }
 }

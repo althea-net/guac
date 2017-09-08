@@ -93,7 +93,7 @@ module.exports = async (test, instance) => {
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await t.shouldFail(createChannel(instance, channelId, 6, 13, 2));
+    await t.shouldFail(createChannel(instance, channelId, 6, 130, 2));
     await revertSnapshot(snapshot);
   });
 
