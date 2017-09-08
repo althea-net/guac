@@ -4,10 +4,6 @@ import "zeppelin-solidity/contracts/token/MintableToken.sol";
 
 
 contract PaymentChannels is ECVerify, MintableToken {
-    event NewChannel(bytes32 channelId);
-    event SawPreimage(bytes32 hashed, bytes32 preimage);
-    event AppliedHashlock(bytes32 hashed, int256 adjustment);
-
     struct Channel {
         bytes32 channelId;
         address address0;
@@ -171,8 +167,6 @@ contract PaymentChannels is ECVerify, MintableToken {
             false                        // bool closed;
 
         );
-
-        NewChannel(_channelId);
     }
 
     function updateState(
@@ -292,7 +286,6 @@ contract PaymentChannels is ECVerify, MintableToken {
     ) {
         require(_hashed == sha3(_preimage));
         seenPreimage[_hashed] = true;
-        SawPreimage(_hashed, _preimage);
     }
 
     function submitPreimages (
@@ -434,7 +427,6 @@ contract PaymentChannels is ECVerify, MintableToken {
             if (seenPreimage[hashed]) {
                 totalAdjustment += adjustment;
             }
-            AppliedHashlock(hashed, adjustment);
         }
 
         return totalAdjustment;
