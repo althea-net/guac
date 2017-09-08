@@ -2,7 +2,7 @@ const test = require("blue-tape");
 
 const newChannel = require("./newChannel.js");
 const updateState = require("./updateState.js");
-const endChannel = require("./endChannel.js");
+const startSettlingPeriod = require("./startSettlingPeriod.js");
 const closeChannel = require("./closeChannel.js");
 const PaymentChannels = artifacts.require("PaymentChannels");
 
@@ -10,6 +10,6 @@ const PaymentChannels = artifacts.require("PaymentChannels");
   const instance = await PaymentChannels.deployed();
   newChannel(test, instance);
   updateState(test, instance);
-  endChannel(test, instance);
+  startSettlingPeriod(test, instance);
   closeChannel(test, instance);
 })();

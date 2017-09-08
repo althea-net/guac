@@ -21,12 +21,12 @@ const {
   mineBlocks,
   createChannel,
   updateState,
-  endChannel
+  startSettlingPeriod
 } = require("./utils.js");
 
 module.exports = async (test, instance) => {
-  // endChannel happy path is tested in updateState.js
-  test("endChannel nonexistant channel", async t => {
+  // startSettlingPeriod happy path is tested in updateState.js
+  test("startSettlingPeriod nonexistant channel", async t => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
@@ -35,7 +35,7 @@ module.exports = async (test, instance) => {
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
     await t.shouldFail(
-      endChannel(
+      startSettlingPeriod(
         instance,
         "0x2000000000000000000000000000000000000000000000000000000000000000"
       )
@@ -44,7 +44,7 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  test("endChannel already ended", async t => {
+  test("startSettlingPeriod already started", async t => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
@@ -52,46 +52,52 @@ module.exports = async (test, instance) => {
     await createChannel(instance, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
-    await endChannel(instance, channelId);
+    await startSettlingPeriod(instance, channelId);
 
-    await t.shouldFail(endChannel(instance, channelId));
+    await t.shouldFail(startSettlingPeriod(instance, channelId));
 
     await revertSnapshot(snapshot);
   });
 
-  test("endChannel bad sig", async t => {
+  test("startSettlingPeriod bad sig", async t => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    const endChannelFingerprint = solSha3("endChannel derp", channelId);
+    const startSettlingPeriodFingerprint = solSha3(
+      "startSettlingPeriod derp",
+      channelId
+    );
 
     await createChannel(instance, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
     await t.shouldFail(
-      instance.endChannel(
+      instance.startSettlingPeriod(
         channelId,
-        sign(endChannelFingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"))
+        sign(startSettlingPeriodFingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"))
       )
     );
 
     await revertSnapshot(snapshot);
   });
 
-  test("endChannel wrong private key", async t => {
+  test("startSettlingPeriod wrong private key", async t => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const endChannelFingerprint = solSha3("endChannel", channelId);
+    const startSettlingPeriodFingerprint = solSha3(
+      "startSettlingPeriod",
+      channelId
+    );
 
     await createChannel(instance, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7, "0x");
 
     await t.shouldFail(
-      instance.endChannel(
+      instance.startSettlingPeriod(
         channelId,
-        sign(endChannelFingerprint, new Buffer(ACCT_2_PRIVKEY, "hex"))
+        sign(startSettlingPeriodFingerprint, new Buffer(ACCT_2_PRIVKEY, "hex"))
       )
     );
 

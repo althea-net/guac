@@ -21,7 +21,7 @@ module.exports = {
   mineBlocks,
   createChannel,
   updateState,
-  endChannel,
+  startSettlingPeriod,
   toSolUint256,
   toSolInt256,
   closeChannel
@@ -187,19 +187,22 @@ async function updateState(
   );
 }
 
-async function endChannel(instance, channelId) {
-  const endChannelFingerprint = solSha3("endChannel", channelId);
+async function startSettlingPeriod(instance, channelId) {
+  const startSettlingPeriodFingerprint = solSha3(
+    "startSettlingPeriod",
+    channelId
+  );
 
-  await instance.endChannel(
+  await instance.startSettlingPeriod(
     channelId,
-    sign(endChannelFingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"))
+    sign(startSettlingPeriodFingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"))
   );
 }
 
 async function closeChannel(instance, channelId, hashlocks) {
   await createChannel(instance, channelId, 6, 6, 2);
   await updateState(instance, channelId, 1, 5, 7, hashlocks);
-  await endChannel(instance, channelId);
+  await startSettlingPeriod(instance, channelId);
   await mineBlocks(5);
   await instance.closeChannel(channelId);
 }

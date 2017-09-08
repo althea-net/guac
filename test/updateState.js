@@ -21,7 +21,7 @@ const {
   mineBlocks,
   createChannel,
   updateState,
-  endChannel
+  startSettlingPeriod
 } = require("./utils.js");
 
 module.exports = async (test, instance) => {
@@ -87,7 +87,7 @@ module.exports = async (test, instance) => {
       "0x1000000000000000000000000000000000000000000000000000000000000000";
 
     await createChannel(instance, channelId, 6, 6, 2);
-    await endChannel(instance, channelId);
+    await startSettlingPeriod(instance, channelId);
     await mineBlocks(5);
 
     await t.shouldFail(updateState(instance, channelId, 1, 5, 7, "0x"));
@@ -441,7 +441,7 @@ module.exports = async (test, instance) => {
 
     await createChannel(instance, channelId, 6, 6, 2);
 
-    await endChannel(instance, channelId);
+    await startSettlingPeriod(instance, channelId);
 
     const updateStateFingerprint = solSha3(
       "updateState",
@@ -602,7 +602,7 @@ module.exports = async (test, instance) => {
 
     await createChannel(instance, channelId, 6, 6, 2);
 
-    await endChannel(instance, channelId);
+    await startSettlingPeriod(instance, channelId);
 
     const updateStateFingerprint = solSha3(
       "updateState",

@@ -314,7 +314,7 @@ contract PaymentChannels is ECVerify, MintableToken {
         }
     }
 
-    function endChannel (
+    function startSettlingPeriod (
         bytes32 _channelId,
         bytes _signature
     ) {
@@ -322,7 +322,7 @@ contract PaymentChannels is ECVerify, MintableToken {
         channelSettlingPeriodNotStarted(_channelId);
 
         bytes32 fingerprint = sha3(
-            "endChannel",
+            "startSettlingPeriod",
             _channelId
         );
 

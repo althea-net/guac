@@ -19,7 +19,7 @@ const {
   mineBlocks,
   createChannel,
   updateState,
-  endChannel,
+  startSettlingPeriod,
   toSolUint256,
   toSolInt256,
   closeChannel
@@ -49,7 +49,7 @@ module.exports = async (test, instance) => {
 
     await createChannel(instance, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7, "0x");
-    await endChannel(instance, channelId);
+    await startSettlingPeriod(instance, channelId);
     await mineBlocks(5);
 
     await t.shouldFail(instance.closeChannel(channelIdFake));
