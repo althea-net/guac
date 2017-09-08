@@ -40,8 +40,8 @@ module.exports = async (test, instance) => {
       JSON.parse(JSON.stringify(await instance.channels(channelId))),
       [
         channelId,
-        "0xa09bd41a9f1d469fca7b3f82a579b855dd6b279d",
-        "0x25e27882eeb2159ad3164ed2622241740dfe0528",
+        ACCT_0_ADDR,
+        ACCT_1_ADDR,
         "12",
         "5",
         "7",
@@ -81,7 +81,7 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  test("endChannel before updateState", async t => {
+  test("channel closed before updateState", async t => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
@@ -420,6 +420,239 @@ module.exports = async (test, instance) => {
         hashlocks,
         signature0,
         signature1
+      )
+    );
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("updateStateWithBounty happy path", async t => {
+    const snapshot = await takeSnapshot();
+
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+
+    const sequenceNumber = 1;
+
+    const balance0 = 5;
+    const balance1 = 7;
+
+    const hashlocks = "0x";
+
+    await createChannel(instance, channelId, 6, 6, 2);
+
+    await endChannel(instance, channelId);
+
+    const updateStateFingerprint = solSha3(
+      "updateState",
+      channelId,
+      sequenceNumber,
+      balance0,
+      balance1,
+      hashlocks
+    );
+
+    const signature0 = sign(
+      updateStateFingerprint,
+      new Buffer(ACCT_0_PRIVKEY, "hex")
+    );
+    const signature1 = sign(
+      updateStateFingerprint,
+      new Buffer(ACCT_1_PRIVKEY, "hex")
+    );
+
+    const bountyFingerprint = solSha3(
+      "updateStateWithBounty",
+      channelId,
+      sequenceNumber,
+      balance0,
+      balance1,
+      hashlocks,
+      signature0,
+      signature1,
+      ACCT_0_ADDR,
+      2
+    );
+
+    const bountySignature = sign(
+      bountyFingerprint,
+      new Buffer(ACCT_0_PRIVKEY, "hex")
+    );
+
+    await instance.updateStateWithBounty(
+      channelId,
+      sequenceNumber,
+      balance0,
+      balance1,
+      hashlocks,
+      signature0,
+      signature1,
+      ACCT_0_ADDR,
+      2,
+      bountySignature,
+      { from: ACCT_2_ADDR }
+    );
+
+    t.equal((await instance.balanceOf(ACCT_2_ADDR)).toString(), "2");
+
+    const channel = JSON.parse(
+      JSON.stringify(await instance.channels(channelId))
+    );
+
+    t.deepEqual(channel, [
+      channelId,
+      ACCT_0_ADDR,
+      ACCT_1_ADDR,
+      "12",
+      "5",
+      "7",
+      "0x",
+      "1",
+      "2",
+      true,
+      channel[10],
+      false
+    ]);
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("updateStateWithBounty settlingPeriod not started", async t => {
+    const snapshot = await takeSnapshot();
+
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+
+    const sequenceNumber = 1;
+
+    const balance0 = 5;
+    const balance1 = 7;
+
+    const hashlocks = "0x";
+
+    await createChannel(instance, channelId, 6, 6, 2);
+
+    const updateStateFingerprint = solSha3(
+      "updateState",
+      channelId,
+      sequenceNumber,
+      balance0,
+      balance1,
+      hashlocks
+    );
+
+    const signature0 = sign(
+      updateStateFingerprint,
+      new Buffer(ACCT_0_PRIVKEY, "hex")
+    );
+    const signature1 = sign(
+      updateStateFingerprint,
+      new Buffer(ACCT_1_PRIVKEY, "hex")
+    );
+
+    const bountyFingerprint = solSha3(
+      "updateStateWithBounty",
+      channelId,
+      sequenceNumber,
+      balance0,
+      balance1,
+      hashlocks,
+      signature0,
+      signature1,
+      ACCT_0_ADDR,
+      2
+    );
+
+    const bountySignature = sign(
+      bountyFingerprint,
+      new Buffer(ACCT_0_PRIVKEY, "hex")
+    );
+
+    await t.shouldFail(
+      instance.updateStateWithBounty(
+        channelId,
+        sequenceNumber,
+        balance0,
+        balance1,
+        hashlocks,
+        signature0,
+        signature1,
+        ACCT_0_ADDR,
+        2,
+        bountySignature,
+        { from: ACCT_2_ADDR }
+      )
+    );
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("updateStateWithBounty bad sig", async t => {
+    const snapshot = await takeSnapshot();
+
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+
+    const sequenceNumber = 1;
+
+    const balance0 = 5;
+    const balance1 = 7;
+
+    const hashlocks = "0x";
+
+    await createChannel(instance, channelId, 6, 6, 2);
+
+    await endChannel(instance, channelId);
+
+    const updateStateFingerprint = solSha3(
+      "updateState",
+      channelId,
+      sequenceNumber,
+      balance0,
+      balance1,
+      hashlocks
+    );
+
+    const signature0 = sign(
+      updateStateFingerprint,
+      new Buffer(ACCT_0_PRIVKEY, "hex")
+    );
+    const signature1 = sign(
+      updateStateFingerprint,
+      new Buffer(ACCT_1_PRIVKEY, "hex")
+    );
+
+    const bountyFingerprint = solSha3(
+      "updateStateWithBounty derp",
+      channelId,
+      sequenceNumber,
+      balance0,
+      balance1,
+      hashlocks,
+      signature0,
+      signature1,
+      ACCT_0_ADDR,
+      2
+    );
+
+    const bountySignature = sign(
+      bountyFingerprint,
+      new Buffer(ACCT_0_PRIVKEY, "hex")
+    );
+
+    await t.shouldFail(
+      instance.updateStateWithBounty(
+        channelId,
+        sequenceNumber,
+        balance0,
+        balance1,
+        hashlocks,
+        signature0,
+        signature1,
+        ACCT_0_ADDR,
+        2,
+        bountySignature,
+        { from: ACCT_2_ADDR }
       )
     );
 

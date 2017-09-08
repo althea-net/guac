@@ -23,7 +23,8 @@
   "scripts": {
     "test": "truffle test",
     "migrate": "truffle migrate --reset",
-    "testrpc": "testrpc -m 'cook mango twist then skin sort option civil have still rather guilt'",
+    "testrpc":
+      "testrpc -m -u 0 -u 1 -u 2 'cook mango twist then skin sort option civil have still rather guilt'",
     "prettier": "prettier --write **/**.js"
   },
   "repository": {

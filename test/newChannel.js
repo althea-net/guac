@@ -35,8 +35,8 @@ module.exports = async (test, instance) => {
       JSON.parse(JSON.stringify(await instance.channels(channelId))),
       [
         "0x1000000000000000000000000000000000000000000000000000000000000000",
-        "0xa09bd41a9f1d469fca7b3f82a579b855dd6b279d",
-        "0x25e27882eeb2159ad3164ed2622241740dfe0528",
+        ACCT_0_ADDR,
+        ACCT_1_ADDR,
         "12",
         "6",
         "6",
