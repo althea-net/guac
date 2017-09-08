@@ -8,6 +8,8 @@ contract PaymentChannels is ECVerify, MintableToken {
     event SawPreimage(bytes32 hashed, bytes32 preimage);
     event AppliedHashlock(bytes32 hashed, int256 adjustment);
 
+    enum MyEnum { Open, Settling, Closed }
+
     struct Channel {
         bytes32 channelId;
         address address0;
@@ -19,9 +21,9 @@ contract PaymentChannels is ECVerify, MintableToken {
         bytes hashlocks;
         uint256 sequenceNumber;
 
-        uint256 settlingPeriod;
-        bool ended;
-        uint256 settlingBlock;
+        uint256 settlingPeriodLength;
+        bool settlingPeriodStarted;
+        uint256 settlingPeriodEnd;
         bool closed;
     }
 
@@ -36,12 +38,12 @@ contract PaymentChannels is ECVerify, MintableToken {
         require(channels[_channelId].channelId == _channelId);
     }
 
-    function channelIsEnded (bytes32 _channelId) {
-        require(channels[_channelId].ended);
+    function channelSettlingPeriodStarted (bytes32 _channelId) {
+        require(channels[_channelId].settlingPeriodStarted);
     }
 
-    function channelIsNotEnded (bytes32 _channelId) {
-        require(!channels[_channelId].ended);
+    function channelSettlingPeriodNotStarted (bytes32 _channelId) {
+        require(!channels[_channelId].settlingPeriodStarted);
     }
 
     function channelIsNotClosed (bytes32 _channelId) {
@@ -50,15 +52,15 @@ contract PaymentChannels is ECVerify, MintableToken {
 
     function channelIsSettled (bytes32 _channelId) {
         require(
-            channels[_channelId].ended && // If the channel is ended
-            block.number >= channels[_channelId].settlingBlock // And the settling block has happened
+            channels[_channelId].settlingPeriodStarted && // If the settling period has started
+            block.number >= channels[_channelId].settlingPeriodEnd // And ended
         );
     }
 
     function channelIsNotSettled (bytes32 _channelId) {
         require(!( // Negate the below
-            channels[_channelId].ended && // If the channel is ended
-            block.number >= channels[_channelId].settlingBlock // And the settling block has happened
+            channels[_channelId].settlingPeriodStarted && // If the settling period is started
+            block.number >= channels[_channelId].settlingPeriodEnd // And ended
         ));
     }
 
@@ -124,7 +126,7 @@ contract PaymentChannels is ECVerify, MintableToken {
         uint256 _balance0,
         uint256 _balance1,
 
-        uint256 _settlingPeriod,
+        uint256 _settlingPeriodLength,
 
         bytes _signature0,
         bytes _signature1
@@ -140,7 +142,7 @@ contract PaymentChannels is ECVerify, MintableToken {
             _balance0,
             _balance1,
 
-            _settlingPeriod
+            _settlingPeriodLength
         );
 
         signedByBoth(
@@ -165,9 +167,9 @@ contract PaymentChannels is ECVerify, MintableToken {
             new bytes(0),                // bytes hashlocks
             0,                           // uint256 sequenceNumber;
 
-            _settlingPeriod,             // uint256 settlingPeriod;
-            false,                       // bool ended;
-            0,                           // uint256 settlingBlock;
+            _settlingPeriodLength,       // uint256 settlingPeriodLength;
+            false,                       // bool settlingPeriodStarted;
+            0,                           // uint256 settlingPeriodEnd;
             false                        // bool closed;
 
         );
@@ -236,7 +238,7 @@ contract PaymentChannels is ECVerify, MintableToken {
         uint256 _bountyAmount,
         bytes _bountySignature
     ) {
-        channelIsEnded(_channelId);
+        channelSettlingPeriodStarted(_channelId);
 
         bytes32 fingerprint = sha3(
             "updateStateWithBounty",
@@ -319,7 +321,7 @@ contract PaymentChannels is ECVerify, MintableToken {
         bytes _signature
     ) {
         channelExists(_channelId);
-        channelIsNotEnded(_channelId);
+        channelSettlingPeriodNotStarted(_channelId);
 
         bytes32 fingerprint = sha3(
             "endChannel",
@@ -333,8 +335,8 @@ contract PaymentChannels is ECVerify, MintableToken {
             channels[_channelId].address1
         );
 
-        channels[_channelId].ended = true;
-        channels[_channelId].settlingBlock = block.number + channels[_channelId].settlingPeriod;
+        channels[_channelId].settlingPeriodStarted = true;
+        channels[_channelId].settlingPeriodEnd = block.number + channels[_channelId].settlingPeriodLength;
     }
 
     function closeChannel (
