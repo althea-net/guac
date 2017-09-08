@@ -92,9 +92,8 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  test("closeChannel happy path with hashlocks", async t => {
+  test("closeChannel happy path with hashlocks (1 missing preimage)", async t => {
     const snapshot = await takeSnapshot();
-    // const eventLog = instance.allEvents();
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
@@ -102,6 +101,8 @@ module.exports = async (test, instance) => {
       "0x2000000000000000000000000000000000000000000000000000000000000000";
     const preimage2 =
       "0x3000000000000000000000000000000000000000000000000000000000000000";
+    const preimage3 =
+      "0x4000000000000000000000000000000000000000000000000000000000000000";
 
     await instance.submitPreimage(solSha3(preimage1), preimage1);
     await instance.submitPreimage(solSha3(preimage2), preimage2);
@@ -111,30 +112,22 @@ module.exports = async (test, instance) => {
     // that doesn't exceed the balances in the channel
     const hashlock1 = `${solSha3(preimage1).slice(2)}${toSolInt256(-10002)}`;
     const hashlock2 = `${solSha3(preimage2).slice(2)}${toSolInt256(10001)}`;
+    const hashlock3 = `${solSha3(preimage3).slice(2)}${toSolInt256(2)}`;
 
-    await closeChannel(instance, channelId, `0x${hashlock1}${hashlock2}`);
+    await closeChannel(
+      instance,
+      channelId,
+      `0x${hashlock1}${hashlock2}${hashlock3}`
+    );
 
     t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "10");
     t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "14");
-
-    // const logs = await p(eventLog.get.bind(eventLog))();
-    // console.log(
-    //   "logs",
-    //   filterLogs(logs).map(log => {
-    //     return Object.entries(log[1]).reduce((acc, [key, val]) => {
-    //       acc[key] = val && val.toString();
-    //       return acc;
-    //     });
-    //   })
-    // );
-    // eventLog.stopWatching();
 
     await revertSnapshot(snapshot);
   });
 
   test("closeChannel happy path with lots of hashlocks", async t => {
     const snapshot = await takeSnapshot();
-    // const eventLog = instance.allEvents();
 
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
@@ -160,18 +153,6 @@ module.exports = async (test, instance) => {
 
     t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "11");
     t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "13");
-
-    // const logs = await p(eventLog.get.bind(eventLog))();
-    // console.log(
-    //   "logs",
-    //   filterLogs(logs).map(log => {
-    //     return Object.entries(log[1]).reduce((acc, [key, val]) => {
-    //       acc[key] = val && val.toString();
-    //       return acc;
-    //     });
-    //   })
-    // );
-    // eventLog.stopWatching();
 
     await revertSnapshot(snapshot);
   });
