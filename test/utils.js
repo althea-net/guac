@@ -199,9 +199,15 @@ async function startSettlingPeriod(instance, channelId) {
   );
 }
 
-async function closeChannel(instance, channelId, hashlocks) {
+async function closeChannel(
+  instance,
+  channelId,
+  hashlocks,
+  balance0 = 5,
+  balance1 = 7
+) {
   await createChannel(instance, channelId, 6, 6, 2);
-  await updateState(instance, channelId, 1, 5, 7, hashlocks);
+  await updateState(instance, channelId, 1, balance0, balance1, hashlocks);
   await startSettlingPeriod(instance, channelId);
   await mineBlocks(5);
   await instance.closeChannel(channelId);

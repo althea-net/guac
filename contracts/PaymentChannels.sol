@@ -183,8 +183,8 @@ contract PaymentChannels is ECVerify, MintableToken {
     ) {
         channelExists(_channelId);
         channelIsNotSettled(_channelId);
+        channelIsNotClosed(_channelId);
         sequenceNumberIsHighest(_channelId, _sequenceNumber);
-        balancesEqualTotal(_channelId, _balance0, _balance1);
 
         bytes32 fingerprint = sha3(
             "updateState",
@@ -214,55 +214,6 @@ contract PaymentChannels is ECVerify, MintableToken {
         );
     }
 
-    function updateStateWithBounty(
-        bytes32 _channelId,
-        uint256 _sequenceNumber,
-
-        uint256 _balance0,
-        uint256 _balance1,
-
-        bytes _hashlocks,
-
-        bytes _signature0,
-        bytes _signature1,
-
-        address _bountyPayer,
-        uint256 _bountyAmount,
-        bytes _bountySignature
-    ) {
-        channelSettlingPeriodStarted(_channelId);
-
-        bytes32 fingerprint = sha3(
-            "updateStateWithBounty",
-            _channelId,
-            _sequenceNumber,
-            _balance0,
-            _balance1,
-            _hashlocks,
-            _signature0,
-            _signature1,
-            _bountyPayer,
-            _bountyAmount
-        );
-
-        signedBy(fingerprint, _bountySignature, _bountyPayer);
-        decrementBalance(_bountyPayer, _bountyAmount);
-        incrementBalance(msg.sender, _bountyAmount);
-
-        updateState(
-            _channelId,
-            _sequenceNumber,
-
-            _balance0,
-            _balance1,
-
-            _hashlocks,
-
-            _signature0,
-            _signature1
-        );
-    }
-
     function updateStateInternal (
         bytes32 _channelId,
         uint256 _sequenceNumber,
@@ -278,6 +229,54 @@ contract PaymentChannels is ECVerify, MintableToken {
         channels[_channelId].balance0 = _balance0;
         channels[_channelId].balance1 = _balance1;
         channels[_channelId].hashlocks = _hashlocks;
+    }
+
+    function updateStateWithBounty(
+        bytes32 _channelId,
+        uint256 _sequenceNumber,
+
+        uint256 _balance0,
+        uint256 _balance1,
+
+        bytes _hashlocks,
+
+        bytes _signature0,
+        bytes _signature1,
+
+        uint256 _bountyAmount,
+        bytes _bountySignature
+    ) {
+        channelSettlingPeriodStarted(_channelId);
+
+        bytes32 fingerprint = sha3(
+            "updateStateWithBounty",
+            _channelId,
+            _sequenceNumber,
+            _balance0,
+            _balance1,
+            _hashlocks,
+            _signature0,
+            _signature1,
+            _bountyAmount
+        );
+
+        address bountyPayer = ecrecovery(fingerprint, _bountySignature);
+
+        decrementBalance(bountyPayer, _bountyAmount);
+        incrementBalance(msg.sender, _bountyAmount);
+
+        updateState(
+            _channelId,
+            _sequenceNumber,
+
+            _balance0,
+            _balance1,
+
+            _hashlocks,
+
+            _signature0,
+            _signature1
+        );
     }
 
     function submitPreimage (

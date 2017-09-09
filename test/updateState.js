@@ -108,30 +108,6 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  test("updateState exceeds total balance", async t => {
-    const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await createChannel(instance, channelId, 6, 6, 2);
-
-    await t.shouldFail(updateState(instance, channelId, 1, 7, 6, "0x"));
-
-    await revertSnapshot(snapshot);
-  });
-
-  test("updateState below total balance", async t => {
-    const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await createChannel(instance, channelId, 6, 6, 2);
-
-    await t.shouldFail(updateState(instance, channelId, 1, 6, 5, "0x"));
-
-    await revertSnapshot(snapshot);
-  });
-
   test("updateState bad fingerprint (string)", async t => {
     const snapshot = await takeSnapshot();
 
@@ -470,7 +446,6 @@ module.exports = async (test, instance) => {
       hashlocks,
       signature0,
       signature1,
-      ACCT_0_ADDR,
       2
     );
 
@@ -487,7 +462,6 @@ module.exports = async (test, instance) => {
       hashlocks,
       signature0,
       signature1,
-      ACCT_0_ADDR,
       2,
       bountySignature,
       { from: ACCT_2_ADDR }
@@ -559,7 +533,6 @@ module.exports = async (test, instance) => {
       hashlocks,
       signature0,
       signature1,
-      ACCT_0_ADDR,
       2
     );
 
@@ -577,7 +550,6 @@ module.exports = async (test, instance) => {
         hashlocks,
         signature0,
         signature1,
-        ACCT_0_ADDR,
         2,
         bountySignature,
         { from: ACCT_2_ADDR }
@@ -631,7 +603,6 @@ module.exports = async (test, instance) => {
       hashlocks,
       signature0,
       signature1,
-      ACCT_0_ADDR,
       2
     );
 
@@ -649,7 +620,6 @@ module.exports = async (test, instance) => {
         hashlocks,
         signature0,
         signature1,
-        ACCT_0_ADDR,
         2,
         bountySignature,
         { from: ACCT_2_ADDR }

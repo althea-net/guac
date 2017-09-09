@@ -92,6 +92,16 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
+  test("bad amount", async t => {
+    const snapshot = await takeSnapshot();
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+
+    await t.shouldFail(closeChannel(instance, channelId, "0x", 5, 50));
+
+    await revertSnapshot(snapshot);
+  });
+
   test("closeChannel happy path with hashlocks (1 missing preimage)", async t => {
     const snapshot = await takeSnapshot();
 
@@ -224,6 +234,31 @@ module.exports = async (test, instance) => {
         channelId,
         1,
         5,
+        7,
+        "0x",
+        sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex")),
+        sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"))
+      )
+    );
+
+    await revertSnapshot(snapshot);
+  });
+
+  test("closeChannelFast bad amount", async t => {
+    const snapshot = await takeSnapshot();
+
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+
+    await createChannel(instance, channelId, 6, 6, 2);
+
+    const fingerprint = solSha3("closeChannelFast", channelId, 1, 500, 7, "0x");
+
+    await t.shouldFail(
+      instance.closeChannelFast(
+        channelId,
+        1,
+        500,
         7,
         "0x",
         sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex")),
