@@ -128,8 +128,8 @@ async function createChannel(
   settlingPeriod,
   string = "newChannel"
 ) {
-  await instance.mint(ACCT_0_ADDR, 12);
-  await instance.mint(ACCT_1_ADDR, 12);
+  await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, {value: 12});
+  await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, {value: 12});
 
   const fingerprint = solSha3(
     string,

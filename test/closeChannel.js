@@ -34,8 +34,8 @@ module.exports = async (test, instance) => {
 
     await closeChannel(instance, channelId, "0x");
 
-    t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "11");
-    t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "13");
+    t.equal((await instance.balanceOf.call(ACCT_0_ADDR)).toString(), "11");
+    t.equal((await instance.balanceOf.call(ACCT_1_ADDR)).toString(), "13");
 
     await revertSnapshot(snapshot);
   });
@@ -130,8 +130,8 @@ module.exports = async (test, instance) => {
       `0x${hashlock1}${hashlock2}${hashlock3}`
     );
 
-    t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "10");
-    t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "14");
+    t.equal((await instance.balanceOf.call(ACCT_0_ADDR)).toString(), "10");
+    t.equal((await instance.balanceOf.call(ACCT_1_ADDR)).toString(), "14");
 
     await revertSnapshot(snapshot);
   });
@@ -161,8 +161,8 @@ module.exports = async (test, instance) => {
 
     await closeChannel(instance, channelId, hashlocks);
 
-    t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "11");
-    t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "13");
+    t.equal((await instance.balanceOf.call(ACCT_0_ADDR)).toString(), "11");
+    t.equal((await instance.balanceOf.call(ACCT_1_ADDR)).toString(), "13");
 
     await revertSnapshot(snapshot);
   });
@@ -187,8 +187,8 @@ module.exports = async (test, instance) => {
       sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"))
     );
 
-    t.equal((await instance.balanceOf(ACCT_0_ADDR)).toString(), "11");
-    t.equal((await instance.balanceOf(ACCT_1_ADDR)).toString(), "13");
+    t.equal((await instance.balanceOf.call(ACCT_0_ADDR)).toString(), "11");
+    t.equal((await instance.balanceOf.call(ACCT_1_ADDR)).toString(), "13");
 
     await revertSnapshot(snapshot);
   });
