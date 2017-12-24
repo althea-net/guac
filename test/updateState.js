@@ -467,7 +467,7 @@ module.exports = async (test, instance) => {
       { from: ACCT_2_ADDR }
     );
 
-    t.equal((await instance.balanceOf(ACCT_2_ADDR)).toString(), "2");
+    t.equal((await instance.balanceOf.call(ACCT_2_ADDR)).toString(), "2");
 
     const channel = JSON.parse(
       JSON.stringify(await instance.channels(channelId))

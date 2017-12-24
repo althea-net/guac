@@ -28,8 +28,8 @@ module.exports = async (test, instance) => {
 
     await createChannel(instance, channelId, 6, 6, 2);
 
-    t.equal((await instance.balanceOf(ACCT_0_ADDR)).c[0], 6);
-    t.equal((await instance.balanceOf(ACCT_1_ADDR)).c[0], 6);
+    t.equal((await instance.balanceOf.call(ACCT_0_ADDR)).c[0], 6);
+    t.equal((await instance.balanceOf.call(ACCT_1_ADDR)).c[0], 6);
 
     t.deepEqual(
       JSON.parse(JSON.stringify(await instance.channels(channelId))),
@@ -56,8 +56,8 @@ module.exports = async (test, instance) => {
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await instance.mint(ACCT_0_ADDR, 12);
-    await instance.mint(ACCT_1_ADDR, 12);
+      await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, {value: 12});
+      await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, {value: 12});
 
     const fingerprint = solSha3(
       "newChannel derp",
@@ -113,8 +113,8 @@ module.exports = async (test, instance) => {
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await instance.mint(ACCT_0_ADDR, 12);
-    await instance.mint(ACCT_1_ADDR, 12);
+    await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, {value: 12});
+    await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, {value: 12});
 
     const fingerprint = solSha3(
       "newChannel",
@@ -149,8 +149,8 @@ module.exports = async (test, instance) => {
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await instance.mint(ACCT_0_ADDR, 12);
-    await instance.mint(ACCT_1_ADDR, 12);
+    await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, {value: 12});
+    await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, {value: 12});
 
     const fingerprint = solSha3(
       "newChannel",

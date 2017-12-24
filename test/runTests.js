@@ -4,7 +4,7 @@ const newChannel = require("./newChannel.js");
 const updateState = require("./updateState.js");
 const startSettlingPeriod = require("./startSettlingPeriod.js");
 const closeChannel = require("./closeChannel.js");
-const PaymentChannels = artifacts.require("PaymentChannels");
+const PaymentChannels = artifacts.require("../contracts/PaymentChannels.sol");
 
 (async () => {
   const instance = await PaymentChannels.deployed();
