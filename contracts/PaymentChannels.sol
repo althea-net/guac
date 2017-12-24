@@ -1,9 +1,9 @@
 pragma solidity ^0.4.11;
 import "./ECVerify.sol";
-import "zeppelin-solidity/contracts/token/MintableToken.sol";
+import "./ETHWallet.sol";
 
 
-contract PaymentChannels is ECVerify, MintableToken {
+contract PaymentChannels is ECVerify, ETHWallet {
     struct Channel {
         bytes32 channelId;
         address address0;
@@ -75,9 +75,9 @@ contract PaymentChannels is ECVerify, MintableToken {
     }
 
     function signedByBoth (
-        bytes32 _fingerprint, 
-        bytes _signature0, 
-        bytes _signature1, 
+        bytes32 _fingerprint,
+        bytes _signature0,
+        bytes _signature1,
         address _address0,
         address _address1
     ) {
@@ -102,13 +102,13 @@ contract PaymentChannels is ECVerify, MintableToken {
     function incrementBalance(address _addr, uint _value)
         internal
     {
-        balances[_addr] = balances[_addr].add(_value);
+        ethBalances[_addr] = ethBalances[_addr].add(_value);
     }
 
     function decrementBalance(address _addr, uint _value)
         internal
     {
-        balances[_addr] = balances[_addr].sub(_value);
+        ethBalances[_addr] = ethBalances[_addr].sub(_value);
     }
 
     function newChannel(
@@ -155,7 +155,7 @@ contract PaymentChannels is ECVerify, MintableToken {
             _address0,                   // address address0;
             _address1,                   // address address1;
             _balance0.add(_balance1),    // uint256 totalBalance;
-            
+
             _balance0,                   // uint256 balance0;
             _balance1,                   // uint256 balance1;
             new bytes(0),                // bytes hashlocks
@@ -406,7 +406,7 @@ contract PaymentChannels is ECVerify, MintableToken {
 
     function getHashlockAdjustment (
         bytes _hashlocks
-    ) 
+    )
         internal
         returns (int256)
     {
