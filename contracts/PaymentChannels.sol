@@ -331,7 +331,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
     function closeChannel (
         bytes32 _channelId
-    ) {
+    ) public {
         channelExists(_channelId);
         channelIsSettled(_channelId);
         channelIsNotClosed(_channelId);
@@ -349,7 +349,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
         bytes _signature0,
         bytes _signature1
-    ) {
+    ) public {
         channelExists(_channelId);
         sequenceNumberIsHighest(_channelId, _sequenceNumber);
         balancesEqualTotal(_channelId, _balance0, _balance1);
@@ -389,76 +389,77 @@ contract PaymentChannels is ECVerify, ETHWallet {
     {
         channels[_channelId].closed = true;
 
-        int256 adjustment = getHashlockAdjustment(channels[_channelId].hashlocks);
+        // int256 adjustment = getHashlockAdjustment(channels[_channelId].hashlocks);
 
-        uint256 balance0;
-        uint256 balance1;
-        (balance0, balance1) = applyHashlockAdjustment(
-            _channelId,
-            channels[_channelId].balance0,
-            channels[_channelId].balance1,
-            adjustment
-        );
-
-        incrementBalance(channels[_channelId].address0, balance0);
-        incrementBalance(channels[_channelId].address1, balance1);
-    }
-
-    function getHashlockAdjustment (
-        bytes _hashlocks
-    )
-        internal
-        returns (int256)
-    {
-        bytes32 hashed;
-        int256 adjustment;
-        int256 totalAdjustment;
-
-        for (uint256 i = 0; i < _hashlocks.length; i += 64) {
-            uint256 hashedOffset = i + 32;
-            uint256 adjustmentOffset = i + 64;
-
-            assembly {
-                hashed := mload(add(_hashlocks, hashedOffset))
-                adjustment := mload(add(_hashlocks, adjustmentOffset))
-            }
-
-            if (seenPreimage[hashed]) {
-                totalAdjustment += adjustment;
-            }
-        }
-
-        return totalAdjustment;
-    }
-
-    function applyHashlockAdjustment (
-        bytes32 _channelId,
-        uint256 _currentBalance0,
-        uint256 _currentBalance1,
-        int256 _totalAdjustment
-    )
-        internal
-        returns (uint256, uint256)
-    {
-        uint256 balance0;
-        uint256 balance1;
-
-        if (_totalAdjustment > 0) {
-            balance0 = _currentBalance0.add(uint256(_totalAdjustment));
-            balance1 = _currentBalance1.sub(uint256(_totalAdjustment));
-        }
-
-        if (_totalAdjustment < 0) {
-            balance0 = _currentBalance0.sub(uint256(-_totalAdjustment));
-            balance1 = _currentBalance1.add(uint256(-_totalAdjustment));
-        }
-
-        if (_totalAdjustment == 0) {
-            balance0 = _currentBalance0;
-            balance1 = _currentBalance1;
-        }
+        // uint256 balance0;
+        // uint256 balance1;
+        // (balance0, balance1) = applyHashlockAdjustment(
+        //     _channelId,
+        //     channels[_channelId].balance0,
+        //     channels[_channelId].balance1,
+        //     adjustment
+        // );
 
         balancesEqualTotal(_channelId, balance0, balance1);
-        return (balance0, balance1);
+        incrementBalance(channels[_channelId].address0, channels[_channelId].balance0);
+        incrementBalance(channels[_channelId].address1, channels[_channelId].balance1);
     }
+
+    // function getHashlockAdjustment (
+    //     bytes _hashlocks
+    // )
+    //     internal
+    //     returns (int256)
+    // {
+    //     bytes32 hashed;
+    //     int256 adjustment;
+    //     int256 totalAdjustment;
+
+    //     for (uint256 i = 0; i < _hashlocks.length; i += 64) {
+    //         uint256 hashedOffset = i + 32;
+    //         uint256 adjustmentOffset = i + 64;
+
+    //         assembly {
+    //             hashed := mload(add(_hashlocks, hashedOffset))
+    //             adjustment := mload(add(_hashlocks, adjustmentOffset))
+    //         }
+
+    //         if (seenPreimage[hashed]) {
+    //             totalAdjustment += adjustment;
+    //         }
+    //     }
+
+    //     return totalAdjustment;
+    // }
+
+    // function applyHashlockAdjustment (
+    //     bytes32 _channelId,
+    //     uint256 _currentBalance0,
+    //     uint256 _currentBalance1,
+    //     int256 _totalAdjustment
+    // )
+    //     internal
+    //     returns (uint256, uint256)
+    // {
+    //     uint256 balance0;
+    //     uint256 balance1;
+
+    //     if (_totalAdjustment > 0) {
+    //         balance0 = _currentBalance0.add(uint256(_totalAdjustment));
+    //         balance1 = _currentBalance1.sub(uint256(_totalAdjustment));
+    //     }
+
+    //     if (_totalAdjustment < 0) {
+    //         balance0 = _currentBalance0.sub(uint256(-_totalAdjustment));
+    //         balance1 = _currentBalance1.add(uint256(-_totalAdjustment));
+    //     }
+
+    //     if (_totalAdjustment == 0) {
+    //         balance0 = _currentBalance0;
+    //         balance1 = _currentBalance1;
+    //     }
+
+    //     balancesEqualTotal(_channelId, balance0, balance1);
+    //     return (balance0, balance1);
+    // }
 }
