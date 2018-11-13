@@ -1,0 +1,5 @@
+1. Expiration for newChannel to prevent griefing and toxic waste lying around. Also check for similar issues in other functions.
+2. Only allow one channel between each pair of addresses.
+3. Salt messages to prevent replays between deployments and anything else.
+4. Create combined `reDraw` call with `closeChannelFast` and `newChannel`
+5. Remove hashlock stuff
