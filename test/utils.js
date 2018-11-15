@@ -36,21 +36,25 @@ function sleep(time) {
 let snapshotInc = 0;
 
 async function takeSnapshot() {
+  const id = ++snapshotInc;
   let res = await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
     jsonrpc: "2.0",
     method: "evm_snapshot",
-    id: snapshotInc++
+    id
   });
+  // console.log("took snapshot with id: ", id, " result: ", res.result);
   return res.result;
 }
 
 async function revertSnapshot(snapshotId) {
+  const id = snapshotInc;
   await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
     jsonrpc: "2.0",
     method: "evm_revert",
     params: [snapshotId],
-    id: snapshotInc++
+    id
   });
+  // console.log("restored snapshot with id: ", id, " snapshotId: ", snapshotId);
 }
 
 async function mineBlock() {
@@ -128,8 +132,8 @@ async function createChannel(
   settlingPeriod,
   string = "newChannel"
 ) {
-  await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, {value: 12});
-  await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, {value: 12});
+  await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, { value: 12 });
+  await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, { value: 12 });
 
   const fingerprint = solSha3(
     string,
@@ -161,16 +165,14 @@ async function updateState(
   channelId,
   sequenceNumber,
   balance0,
-  balance1,
-  hashlocks
+  balance1
 ) {
   const fingerprint = solSha3(
     "updateState",
     channelId,
     sequenceNumber,
     balance0,
-    balance1,
-    hashlocks
+    balance1
   );
 
   const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
@@ -181,7 +183,6 @@ async function updateState(
     sequenceNumber,
     balance0,
     balance1,
-    hashlocks,
     signature0,
     signature1
   );
@@ -199,15 +200,9 @@ async function startSettlingPeriod(instance, channelId) {
   );
 }
 
-async function closeChannel(
-  instance,
-  channelId,
-  hashlocks,
-  balance0 = 5,
-  balance1 = 7
-) {
+async function closeChannel(instance, channelId, balance0 = 5, balance1 = 7) {
   await createChannel(instance, channelId, 6, 6, 2);
-  await updateState(instance, channelId, 1, balance0, balance1, hashlocks);
+  await updateState(instance, channelId, 1, balance0, balance1);
   await startSettlingPeriod(instance, channelId);
   await mineBlocks(5);
   await instance.closeChannel(channelId);

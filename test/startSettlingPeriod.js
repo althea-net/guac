@@ -32,7 +32,7 @@ module.exports = async (test, instance) => {
       "0x1000000000000000000000000000000000000000000000000000000000000000";
 
     await createChannel(instance, channelId, 6, 6, 2);
-    await updateState(instance, channelId, 1, 5, 7, "0x");
+    await updateState(instance, channelId, 1, 5, 7);
 
     await t.shouldFail(
       startSettlingPeriod(
