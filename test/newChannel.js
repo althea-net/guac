@@ -40,7 +40,6 @@ module.exports = async (test, instance) => {
         "12",
         "6",
         "6",
-        "0x",
         "0",
         "2",
         false,
@@ -56,8 +55,8 @@ module.exports = async (test, instance) => {
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-      await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, {value: 12});
-      await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, {value: 12});
+    await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, { value: 12 });
+    await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, { value: 12 });
 
     const fingerprint = solSha3(
       "newChannel derp",
@@ -113,8 +112,8 @@ module.exports = async (test, instance) => {
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, {value: 12});
-    await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, {value: 12});
+    await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, { value: 12 });
+    await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, { value: 12 });
 
     const fingerprint = solSha3(
       "newChannel",
@@ -149,8 +148,8 @@ module.exports = async (test, instance) => {
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, {value: 12});
-    await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, {value: 12});
+    await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, { value: 12 });
+    await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, { value: 12 });
 
     const fingerprint = solSha3(
       "newChannel",
