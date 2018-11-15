@@ -4,6 +4,11 @@ import "./ETHWallet.sol";
 
 
 contract PaymentChannels is ECVerify, ETHWallet {
+    enum ChannelStatus {
+        Open,
+        Challenge
+    }
+
     struct Channel {
         bytes32 channelId;
         address address0;
@@ -48,10 +53,12 @@ contract PaymentChannels is ECVerify, ETHWallet {
     }
 
     function channelIsNotSettled (bytes32 _channelId) internal {
-        require(!( // Negate the below
-            channels[_channelId].settlingPeriodStarted && // If the settling period is started
-            block.number >= channels[_channelId].settlingPeriodEnd // And ended
-        ));
+        require(
+            !( // Negate the below
+                channels[_channelId].settlingPeriodStarted && // If the settling period is started
+                block.number >= channels[_channelId].settlingPeriodEnd // And ended
+            )
+        );
     }
 
     function balancesEqualTotal (bytes32 _channelId, uint256 _balance0, uint256 _balance1) internal {
