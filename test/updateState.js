@@ -53,8 +53,6 @@ module.exports = async (test, instance) => {
       ]
     );
 
-    eventLog.stopWatching();
-
     await revertSnapshot(snapshot);
   });
 

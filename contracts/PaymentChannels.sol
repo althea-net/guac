@@ -21,6 +21,10 @@ contract PaymentChannels is ECVerify, ETHWallet {
     mapping (bytes32 => Channel) public channels;
     mapping (address => mapping (address => bool)) public channelBetweenPairs;
 
+    function txNotExpired (uint256 _expiration) internal {
+        require(block.number < _expiration);
+    }
+
     function channelDoesNotExist (bytes32 _channelId) internal {
         require(channels[_channelId].channelId != _channelId);
     }
@@ -124,6 +128,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         uint256 _balance0,
         uint256 _balance1,
 
+        uint256 _expiration,
         uint256 _settlingPeriodLength,
 
         bytes _signature0,
@@ -131,6 +136,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
     ) public {
         channelDoesNotExist(_channelId);
         noChannelBetweenPair(_address0, _address1);
+        txNotExpired(_expiration);
 
         bytes32 fingerprint = sha3(
             "newChannel",
@@ -142,6 +148,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
             _balance0,
             _balance1,
 
+            _expiration,
             _settlingPeriodLength
         );
 
