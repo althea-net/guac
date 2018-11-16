@@ -4,11 +4,6 @@ import "./ETHWallet.sol";
 
 
 contract PaymentChannels is ECVerify, ETHWallet {
-    enum ChannelStatus {
-        Open,
-        Challenge
-    }
-
     struct Channel {
         bytes32 channelId;
         address address0;
@@ -24,9 +19,15 @@ contract PaymentChannels is ECVerify, ETHWallet {
     }
 
     mapping (bytes32 => Channel) public channels;
+    mapping (address => mapping (address => bool)) public channelBetweenPairs;
 
     function channelDoesNotExist (bytes32 _channelId) internal {
         require(channels[_channelId].channelId != _channelId);
+    }
+
+    function noChannelBetweenPair (address _address0, address _address1) internal {
+        require(_address0 < _address1);
+        require(!channelBetweenPairs[_address0][_address1]);
     }
 
     function channelExists (bytes32 _channelId) internal {
@@ -129,6 +130,8 @@ contract PaymentChannels is ECVerify, ETHWallet {
         bytes _signature1
     ) public {
         channelDoesNotExist(_channelId);
+        noChannelBetweenPair(_address0, _address1);
+
         bytes32 fingerprint = sha3(
             "newChannel",
             _channelId,
@@ -169,6 +172,8 @@ contract PaymentChannels is ECVerify, ETHWallet {
             false                        // bool closed;
 
         );
+
+        channelBetweenPairs[_address0][_address1] = true;
     }
 
     function updateState(
@@ -282,6 +287,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         incrementBalance(channels[_channelId].address0, channels[_channelId].balance0);
         incrementBalance(channels[_channelId].address1, channels[_channelId].balance1);
 
+        delete channelBetweenPairs[channels[_channelId].address0][channels[_channelId].address1];
         delete channels[_channelId];
     }
 
@@ -324,6 +330,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         incrementBalance(channels[_channelId].address0, channels[_channelId].balance0);
         incrementBalance(channels[_channelId].address1, channels[_channelId].balance1);
 
+        delete channelBetweenPairs[channels[_channelId].address0][channels[_channelId].address1];
         delete channels[_channelId];
     }
 }
