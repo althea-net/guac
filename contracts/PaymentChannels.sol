@@ -340,4 +340,60 @@ contract PaymentChannels is ECVerify, ETHWallet {
         delete channelBetweenPairs[channels[_channelId].address0][channels[_channelId].address1];
         delete channels[_channelId];
     }
+
+    function reDraw (
+        bytes32 _channelId,
+
+        uint256 _sequenceNumber,
+        uint256 _oldBalance0,
+        uint256 _oldBalance1,
+
+        uint256 _newBalance0,
+        uint256 _newBalance1,
+
+        uint256 _expiration,
+
+        bytes _signature0,
+        bytes _signature1
+    ) public {
+        channelExists(_channelId);
+        sequenceNumberIsHighest(_channelId, _sequenceNumber);
+        balancesEqualTotal(_channelId, _oldBalance0, _oldBalance1);
+        txNotExpired(_expiration);
+
+        Channel storage channel = channels[_channelId];
+
+        bytes32 fingerprint = sha3(
+            "reDraw",
+            _channelId,
+
+            _sequenceNumber,
+            _oldBalance0,
+            _oldBalance1,
+
+            _newBalance0,
+            _newBalance1,
+
+            _expiration
+        );
+
+        signedByBoth(
+            fingerprint,
+            _signature0,
+            _signature1,
+            channel.address0,
+            channel.address1
+        );
+
+        channel.sequenceNumber = _sequenceNumber;
+
+        channel.totalBalance = _newBalance0.add(_newBalance1);
+        channel.balance0 = _newBalance0;
+        channel.balance1 = _newBalance1;
+
+        incrementBalance(channel.address0, _oldBalance0);
+        incrementBalance(channel.address1, _oldBalance1);
+        decrementBalance(channel.address0, _newBalance0);
+        decrementBalance(channel.address1, _newBalance1);
+    }
 }
