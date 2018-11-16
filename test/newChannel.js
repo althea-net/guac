@@ -14,6 +14,9 @@ const {
 
 const {
   createChannel,
+  updateState,
+  startSettlingPeriod,
+  mineBlocks,
   solSha3,
   sign,
   takeSnapshot,
@@ -47,6 +50,29 @@ module.exports = async (test, instance) => {
         false
       ]
     );
+    await revertSnapshot(snapshot);
+  });
+
+  test("newChannel channel already exists between nodes", async t => {
+    const snapshot = await takeSnapshot();
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const channelId2 =
+      "0x2000000000000000000000000000000000000000000000000000000000000000";
+    const channelId3 =
+      "0x3000000000000000000000000000000000000000000000000000000000000000";
+
+    await createChannel(instance, channelId, 6, 6, 2);
+    await t.shouldFail(createChannel(instance, channelId2, 6, 6, 2));
+
+    await updateState(instance, channelId, 1, 5, 7);
+    await startSettlingPeriod(instance, channelId);
+    await mineBlocks(5);
+
+    await instance.closeChannel(channelId);
+
+    await createChannel(instance, channelId3, 6, 6, 2);
+
     await revertSnapshot(snapshot);
   });
 

@@ -37,7 +37,7 @@ module.exports = async (test, instance) => {
     await startSettlingPeriod(instance, channelId);
     await mineBlocks(5);
 
-    instance.closeChannel(channelId);
+    await instance.closeChannel(channelId);
 
     t.equal((await instance.balanceOf.call(ACCT_0_ADDR)).toString(), "11");
     t.equal((await instance.balanceOf.call(ACCT_1_ADDR)).toString(), "13");
@@ -59,7 +59,7 @@ module.exports = async (test, instance) => {
 
     await t.shouldFail(instance.closeChannel(channelIdFake));
 
-    instance.closeChannel(channelId);
+    await instance.closeChannel(channelId);
 
     await revertSnapshot(snapshot);
   });
@@ -92,7 +92,7 @@ module.exports = async (test, instance) => {
     await startSettlingPeriod(instance, channelId);
     await mineBlocks(5);
 
-    instance.closeChannel(channelId);
+    await instance.closeChannel(channelId);
 
     await t.shouldFail(instance.closeChannel(channelId));
 
@@ -109,7 +109,7 @@ module.exports = async (test, instance) => {
     await startSettlingPeriod(instance, channelId);
     await mineBlocks(5);
 
-    instance.closeChannel(channelId);
+    await instance.closeChannel(channelId);
 
     await t.shouldFail(updateState(instance, channelId, 1, 5, 7));
 
