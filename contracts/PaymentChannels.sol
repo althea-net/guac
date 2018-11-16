@@ -140,6 +140,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
         bytes32 fingerprint = sha3(
             "newChannel",
+            address(this),
             _channelId,
 
             _address0,
@@ -199,6 +200,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
         bytes32 fingerprint = sha3(
             "updateState",
+            address(this),
             _channelId,
             _sequenceNumber,
             _balance0,
@@ -235,6 +237,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
         bytes32 fingerprint = sha3(
             "updateStateWithBounty",
+            address(this),
             _channelId,
             _sequenceNumber,
             _balance0,
@@ -270,6 +273,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
         bytes32 fingerprint = sha3(
             "startSettlingPeriod",
+            address(this),
             _channelId
         );
 
@@ -314,6 +318,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
         bytes32 fingerprint = sha3(
             "closeChannelFast",
+            address(this),
             _channelId,
             _sequenceNumber,
             _balance0,
@@ -365,6 +370,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
         bytes32 fingerprint = sha3(
             "reDraw",
+            address(this),
             _channelId,
 
             _sequenceNumber,

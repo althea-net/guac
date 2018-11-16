@@ -66,6 +66,7 @@ module.exports = async (test, instance) => {
 
     const startSettlingPeriodFingerprint = solSha3(
       "startSettlingPeriod derp",
+      instance.contract.address,
       channelId
     );
 
@@ -88,6 +89,7 @@ module.exports = async (test, instance) => {
       "0x1000000000000000000000000000000000000000000000000000000000000000";
     const startSettlingPeriodFingerprint = solSha3(
       "startSettlingPeriod",
+      instance.contract.address,
       channelId
     );
 

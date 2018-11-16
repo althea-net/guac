@@ -122,7 +122,14 @@ module.exports = async (test, instance) => {
     await createChannel(instance, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7);
 
-    const fingerprint = solSha3("updateState derp", channelId, 2, 5, 7);
+    const fingerprint = solSha3(
+      "updateState derp",
+      instance.contract.address,
+      channelId,
+      2,
+      5,
+      7
+    );
 
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
     const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
@@ -142,7 +149,14 @@ module.exports = async (test, instance) => {
 
     await createChannel(instance, channelId, 6, 6, 2);
 
-    const fingerprint = solSha3("updateState", channelId, 1, 5, 7);
+    const fingerprint = solSha3(
+      "updateState",
+      instance.contract.address,
+      channelId,
+      1,
+      5,
+      7
+    );
 
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
     const signature1 = sign(fingerprint, new Buffer(ACCT_2_PRIVKEY, "hex"));
@@ -171,6 +185,7 @@ module.exports = async (test, instance) => {
 
     const updateStateFingerprint = solSha3(
       "updateState",
+      instance.contract.address,
       channelId,
       sequenceNumber,
       balance0,
@@ -188,6 +203,7 @@ module.exports = async (test, instance) => {
 
     const bountyFingerprint = solSha3(
       "updateStateWithBounty",
+      instance.contract.address,
       channelId,
       sequenceNumber,
       balance0,
@@ -252,6 +268,7 @@ module.exports = async (test, instance) => {
 
     const updateStateFingerprint = solSha3(
       "updateState",
+      instance.contract.address,
       channelId,
       sequenceNumber,
       balance0,
@@ -269,6 +286,7 @@ module.exports = async (test, instance) => {
 
     const bountyFingerprint = solSha3(
       "updateStateWithBounty",
+      instance.contract.address,
       channelId,
       sequenceNumber,
       balance0,
@@ -348,6 +366,7 @@ module.exports = async (test, instance) => {
 
     const bountyFingerprint = solSha3(
       "updateStateWithBounty",
+      instance.contract.address,
       channelId,
       sequenceNumber,
       balance0,
@@ -364,6 +383,7 @@ module.exports = async (test, instance) => {
 
     const badBountyFingerprint = solSha3(
       "updateStateWithBounty derp",
+      instance.contract.address,
       channelId,
       sequenceNumber,
       balance0,

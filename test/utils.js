@@ -139,6 +139,7 @@ async function createChannel(
 
   const fingerprint = solSha3(
     string,
+    instance.contract.address,
     channelId,
     ACCT_0_ADDR,
     ACCT_1_ADDR,
@@ -173,6 +174,7 @@ async function updateState(
 ) {
   const fingerprint = solSha3(
     "updateState",
+    instance.contract.address,
     channelId,
     sequenceNumber,
     balance0,
@@ -195,6 +197,7 @@ async function updateState(
 async function startSettlingPeriod(instance, channelId) {
   const startSettlingPeriodFingerprint = solSha3(
     "startSettlingPeriod",
+    instance.contract.address,
     channelId
   );
 
@@ -224,6 +227,7 @@ async function reDraw(
 ) {
   const fingerprint = solSha3(
     "reDraw",
+    instance.contract.address,
     channelId,
     sequenceNumber,
     oldBalance0,
@@ -236,19 +240,6 @@ async function reDraw(
   const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
   const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
 
-  // bytes32 _channelId,
-
-  // uint256 _sequenceNumber,
-  // uint256 _oldBalance0,
-  // uint256 _oldBalance1,
-
-  // uint256 _newBalance0,
-  // uint256 _newBalance1,
-
-  // uint256 _expiration,
-
-  // bytes _signature0,
-  // bytes _signature1
   await instance.reDraw(
     channelId,
     sequenceNumber,

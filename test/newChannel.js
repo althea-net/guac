@@ -99,6 +99,7 @@ module.exports = async (test, instance) => {
 
     const fingerprint = solSha3(
       "newChannel derp",
+      instance.contract.address,
       channelId,
       ACCT_0_ADDR,
       ACCT_1_ADDR,
@@ -160,6 +161,7 @@ module.exports = async (test, instance) => {
 
     const fingerprint = solSha3(
       "newChannel",
+      instance.contract.address,
       channelId,
       ACCT_0_ADDR,
       ACCT_1_ADDR,
@@ -200,6 +202,7 @@ module.exports = async (test, instance) => {
 
     const fingerprint = solSha3(
       "newChannel",
+      instance.contract.address,
       channelId,
       ACCT_0_ADDR,
       ACCT_1_ADDR,

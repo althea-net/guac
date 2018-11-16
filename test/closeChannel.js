@@ -139,7 +139,14 @@ module.exports = async (test, instance) => {
 
     await createChannel(instance, channelId, 6, 6, 2);
 
-    const fingerprint = solSha3("closeChannelFast", channelId, 1, 5, 7);
+    const fingerprint = solSha3(
+      "closeChannelFast",
+      instance.contract.address,
+      channelId,
+      1,
+      5,
+      7
+    );
 
     await instance.closeChannelFast(
       channelId,
@@ -160,7 +167,11 @@ module.exports = async (test, instance) => {
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    const fingerprint = solSha3("closeChannelFast", channelId);
+    const fingerprint = solSha3(
+      "closeChannelFast",
+      instance.contract.address,
+      channelId
+    );
 
     await t.shouldFail(
       instance.closeChannelFast(
@@ -182,7 +193,14 @@ module.exports = async (test, instance) => {
 
     await createChannel(instance, channelId, 6, 6, 2);
 
-    const fingerprint = solSha3("closeChannelFast derp", channelId, 1, 5, 7);
+    const fingerprint = solSha3(
+      "closeChannelFast derp",
+      instance.contract.address,
+      channelId,
+      1,
+      5,
+      7
+    );
 
     await t.shouldFail(
       instance.closeChannelFast(
@@ -206,7 +224,14 @@ module.exports = async (test, instance) => {
 
     await createChannel(instance, channelId, 6, 6, 2);
 
-    const fingerprint = solSha3("closeChannelFast", channelId, 1, 500, 7);
+    const fingerprint = solSha3(
+      "closeChannelFast",
+      instance.contract.address,
+      channelId,
+      1,
+      500,
+      7
+    );
 
     await t.shouldFail(
       instance.closeChannelFast(
