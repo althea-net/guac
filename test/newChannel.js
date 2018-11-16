@@ -53,6 +53,17 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
+  test.only("newChannel expired", async t => {
+    const snapshot = await takeSnapshot();
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+
+    await t.shouldFail(createChannel(instance, channelId, 6, 6, 2, 0));
+    await createChannel(instance, channelId, 6, 6, 2);
+
+    await revertSnapshot(snapshot);
+  });
+
   test("newChannel channel already exists between nodes", async t => {
     const snapshot = await takeSnapshot();
     const channelId =
@@ -84,6 +95,8 @@ module.exports = async (test, instance) => {
     await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, { value: 12 });
     await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, { value: 12 });
 
+    const expiration = web3.eth.getBlock("latest").number + 5;
+
     const fingerprint = solSha3(
       "newChannel derp",
       channelId,
@@ -91,6 +104,7 @@ module.exports = async (test, instance) => {
       ACCT_1_ADDR,
       6,
       6,
+      expiration,
       2
     );
 
@@ -104,6 +118,7 @@ module.exports = async (test, instance) => {
         ACCT_1_ADDR,
         6,
         6,
+        expiration,
         2,
         signature0,
         signature1
@@ -141,6 +156,8 @@ module.exports = async (test, instance) => {
     await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, { value: 12 });
     await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, { value: 12 });
 
+    const expiration = web3.eth.getBlock("latest").number + 5;
+
     const fingerprint = solSha3(
       "newChannel",
       channelId,
@@ -148,6 +165,7 @@ module.exports = async (test, instance) => {
       ACCT_1_ADDR,
       6,
       6,
+      expiration,
       2
     );
 
@@ -161,6 +179,7 @@ module.exports = async (test, instance) => {
         ACCT_1_ADDR,
         6,
         6,
+        expiration,
         2,
         signature0,
         signature1
@@ -177,6 +196,8 @@ module.exports = async (test, instance) => {
     await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, { value: 12 });
     await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, { value: 12 });
 
+    const expiration = web3.eth.getBlock("latest").number + 5;
+
     const fingerprint = solSha3(
       "newChannel",
       channelId,
@@ -184,6 +205,7 @@ module.exports = async (test, instance) => {
       ACCT_1_ADDR,
       6,
       6,
+      expiration,
       2
     );
 
@@ -197,11 +219,25 @@ module.exports = async (test, instance) => {
         ACCT_2_ADDR,
         6,
         6,
+        expiration,
         2,
         signature0,
         signature1
       )
     );
+
+    await instance.newChannel(
+      channelId,
+      ACCT_0_ADDR,
+      ACCT_1_ADDR,
+      6,
+      6,
+      expiration,
+      2,
+      signature0,
+      signature1
+    );
+
     await revertSnapshot(snapshot);
   });
 };

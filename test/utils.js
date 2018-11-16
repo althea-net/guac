@@ -130,7 +130,8 @@ async function createChannel(
   balance0,
   balance1,
   settlingPeriod,
-  string = "newChannel"
+  string = "newChannel",
+  expiration = web3.eth.getBlock("latest").number + 5
 ) {
   await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, { value: 12 });
   await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, { value: 12 });
@@ -142,6 +143,7 @@ async function createChannel(
     ACCT_1_ADDR,
     balance0,
     balance1,
+    expiration,
     settlingPeriod
   );
 
@@ -154,6 +156,7 @@ async function createChannel(
     ACCT_1_ADDR,
     balance0,
     balance1,
+    expiration,
     settlingPeriod,
     signature0,
     signature1
