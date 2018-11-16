@@ -53,7 +53,7 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  test.only("newChannel expired", async t => {
+  test("newChannel expired", async t => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";

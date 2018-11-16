@@ -24,7 +24,8 @@ module.exports = {
   startSettlingPeriod,
   toSolUint256,
   toSolInt256,
-  closeChannel
+  closeChannel,
+  reDraw
 };
 
 function sleep(time) {
@@ -209,4 +210,54 @@ async function closeChannel(instance, channelId, balance0 = 5, balance1 = 7) {
   await startSettlingPeriod(instance, channelId);
   await mineBlocks(5);
   await instance.closeChannel(channelId);
+}
+
+async function reDraw(
+  instance,
+  channelId,
+  sequenceNumber,
+  oldBalance0,
+  oldBalance1,
+  newBalance0,
+  newBalance1,
+  expiration = web3.eth.getBlock("latest").number + 5
+) {
+  const fingerprint = solSha3(
+    "reDraw",
+    channelId,
+    sequenceNumber,
+    oldBalance0,
+    oldBalance1,
+    newBalance0,
+    newBalance1,
+    expiration
+  );
+
+  const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
+  const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
+
+  // bytes32 _channelId,
+
+  // uint256 _sequenceNumber,
+  // uint256 _oldBalance0,
+  // uint256 _oldBalance1,
+
+  // uint256 _newBalance0,
+  // uint256 _newBalance1,
+
+  // uint256 _expiration,
+
+  // bytes _signature0,
+  // bytes _signature1
+  await instance.reDraw(
+    channelId,
+    sequenceNumber,
+    oldBalance0,
+    oldBalance1,
+    newBalance0,
+    newBalance1,
+    expiration,
+    signature0,
+    signature1
+  );
 }
