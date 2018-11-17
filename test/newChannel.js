@@ -28,8 +28,12 @@ module.exports = async (test, instance) => {
     const snapshot = await takeSnapshot();
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
+    //await instance.contract.once("ChannelOpened")
+    // console.log("EVENTN", instance);
 
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, channelId, 6, 6, 2);
+
+    t.equal(tx.logs[0].event, "ChannelOpened");
 
     t.equal((await instance.balanceOf.call(ACCT_0_ADDR)).c[0], 6);
     t.equal((await instance.balanceOf.call(ACCT_1_ADDR)).c[0], 6);

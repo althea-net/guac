@@ -152,7 +152,7 @@ async function createChannel(
   const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
   const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
 
-  await instance.newChannel(
+  return instance.newChannel(
     channelId,
     ACCT_0_ADDR,
     ACCT_1_ADDR,
@@ -201,7 +201,7 @@ async function startSettlingPeriod(instance, channelId) {
     channelId
   );
 
-  await instance.startSettlingPeriod(
+  return instance.startSettlingPeriod(
     channelId,
     sign(startSettlingPeriodFingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"))
   );
@@ -240,7 +240,7 @@ async function reDraw(
   const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
   const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
 
-  await instance.reDraw(
+  return instance.reDraw(
     channelId,
     sequenceNumber,
     oldBalance0,

@@ -174,14 +174,18 @@ module.exports = async (test, instance) => {
     const channelId =
       "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    const sequenceNumber = 1;
-
-    const balance0 = 5;
-    const balance1 = 7;
-
     await createChannel(instance, channelId, 6, 6, 2);
 
-    await startSettlingPeriod(instance, channelId);
+    await updateState(instance, channelId, 1, 5, 7);
+
+    const tx = await startSettlingPeriod(instance, channelId);
+
+    t.equal(tx.logs[0].event, "SettlingStarted");
+    t.equal(tx.logs[0].args["_sequenceNumber"].toString(), "1");
+
+    const sequenceNumber = 2;
+    const balance0 = 4;
+    const balance1 = 8;
 
     const updateStateFingerprint = solSha3(
       "updateState",
@@ -241,9 +245,9 @@ module.exports = async (test, instance) => {
       ACCT_0_ADDR,
       ACCT_1_ADDR,
       "12",
-      "5",
-      "7",
-      "1",
+      "4",
+      "8",
+      "2",
       "2",
       true,
       channel[9],

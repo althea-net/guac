@@ -18,6 +18,19 @@ contract PaymentChannels is ECVerify, ETHWallet {
         bool closed;
     }
 
+    event ChannelOpened(
+        bytes32 indexed _channelId
+    );
+
+    event SettlingStarted(
+        bytes32 indexed _channelId,
+        uint256 _sequenceNumber
+    );
+
+    event ChannelReDrawn(
+        bytes32 indexed _channelId
+    );
+
     mapping (bytes32 => Channel) public channels;
     mapping (address => mapping (address => bool)) public channelBetweenPairs;
 
@@ -161,9 +174,6 @@ contract PaymentChannels is ECVerify, ETHWallet {
             _address1
         );
 
-        decrementBalance(_address0, _balance0);
-        decrementBalance(_address1, _balance1);
-
         channels[_channelId] = Channel(
             _channelId,                  // bytes32 channelId;
             _address0,                   // address address0;
@@ -182,6 +192,13 @@ contract PaymentChannels is ECVerify, ETHWallet {
         );
 
         channelBetweenPairs[_address0][_address1] = true;
+
+        ChannelOpened(
+            _channelId
+        );
+
+        decrementBalance(_address0, _balance0);
+        decrementBalance(_address1, _balance1);
     }
 
     function updateState(
@@ -286,6 +303,12 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
         channels[_channelId].settlingPeriodStarted = true;
         channels[_channelId].settlingPeriodEnd = block.number + channels[_channelId].settlingPeriodLength;
+        
+
+        SettlingStarted(
+            _channelId,
+            channels[_channelId].sequenceNumber
+        );
     }
 
     function closeChannel (
@@ -396,6 +419,10 @@ contract PaymentChannels is ECVerify, ETHWallet {
         channel.totalBalance = _newBalance0.add(_newBalance1);
         channel.balance0 = _newBalance0;
         channel.balance1 = _newBalance1;
+
+        ChannelReDrawn(
+            _channelId
+        );
 
         incrementBalance(channel.address0, _oldBalance0);
         incrementBalance(channel.address1, _oldBalance1);

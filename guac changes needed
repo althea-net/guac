@@ -3,4 +3,4 @@
 // 3. Salt messages to prevent replays between deployments and anything else.
 // 4. Create combined `reDraw` call with `closeChannelFast` and `newChannel`
 // 5. Remove hashlock stuff
-6. Add events
+// 6. Add events
