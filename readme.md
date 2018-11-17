@@ -4,15 +4,24 @@ To test this contract first install node 8 or above. Then run `npm install`, `np
 
 ## newChannel
 
-- `bytes32 _channelId`:
+- bytes32 \_channelId: This is used for several purposes:
 
-- `address _address0`:
-- `address _address1`:
+  - Identifying the channel in logs
+  - Looking up the channel
 
-- `uint256 _balance0`:
-- `uint256 _balance1`:
+- address \_address0:
+- address \_address1:
 
-- `uint256 _settlingPeriodLength`:
+- uint256 \_balance0:
+- uint256 \_balance1:
 
-- `bytes _signature0`:
-- `bytes _signature1`:
+- uint256 \_expiration:
+- uint256 \_settlingPeriodLength:
+
+- bytes \_signature0:
+- bytes \_signature1:
+
+## To Do:
+
+- Missing test case for unsorted addresses
+- Check for other missing test cases
