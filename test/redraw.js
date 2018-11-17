@@ -49,19 +49,7 @@ module.exports = async (test, instance) => {
 
     t.deepEqual(
       JSON.parse(JSON.stringify(await instance.channels(channelId))),
-      [
-        channelId,
-        ACCT_0_ADDR,
-        ACCT_1_ADDR,
-        "6",
-        "5",
-        "1",
-        "1",
-        "2",
-        false,
-        "0",
-        false
-      ]
+      [channelId, ACCT_0_ADDR, ACCT_1_ADDR, "6", "5", "1", "1", "2", false, "0"]
     );
 
     await revertSnapshot(snapshot);

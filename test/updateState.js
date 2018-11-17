@@ -48,8 +48,7 @@ module.exports = async (test, instance) => {
         "1",
         "2",
         false,
-        "0",
-        false
+        "0"
       ]
     );
 
@@ -263,8 +262,7 @@ module.exports = async (test, instance) => {
       "2",
       "2",
       true,
-      channel[9],
-      false
+      channel[9]
     ]);
 
     await revertSnapshot(snapshot);

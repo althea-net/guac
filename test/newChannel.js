@@ -50,8 +50,7 @@ module.exports = async (test, instance) => {
         "0",
         "2",
         false,
-        "0",
-        false
+        "0"
       ]
     );
     await revertSnapshot(snapshot);

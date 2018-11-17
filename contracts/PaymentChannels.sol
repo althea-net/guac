@@ -15,7 +15,6 @@ contract PaymentChannels is ECVerify, ETHWallet {
         uint256 settlingPeriodLength;
         bool settlingPeriodStarted;
         uint256 settlingPeriodEnd;
-        bool closed;
     }
 
     event ChannelOpened(
@@ -57,10 +56,6 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
     function channelSettlingPeriodNotStarted (Channel _channel) internal pure {
         require(!_channel.settlingPeriodStarted);
-    }
-
-    function channelIsNotClosed (Channel _channel) internal pure {
-        require(!_channel.closed);
     }
 
     function channelIsSettled (Channel _channel) internal view {
@@ -186,9 +181,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
             _settlingPeriodLength,       // uint256 settlingPeriodLength;
             false,                       // bool settlingPeriodStarted;
-            0,                           // uint256 settlingPeriodEnd;
-            false                        // bool closed;
-
+            0                           // uint256 settlingPeriodEnd;
         );
 
         channelBetweenPairs[_address0][_address1] = true;
@@ -362,8 +355,6 @@ contract PaymentChannels is ECVerify, ETHWallet {
             channel.address0,
             channel.address1
         );
-
-        channel.closed = true;
 
         channel.sequenceNumber = _sequenceNumber;
         channel.balance0 = _balance0;
