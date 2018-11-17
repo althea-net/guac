@@ -47,44 +47,44 @@ contract PaymentChannels is ECVerify, ETHWallet {
         require(!channelBetweenPairs[_address0][_address1]);
     }
 
-    function channelExists (bytes32 _channelId) internal {
-        require(channels[_channelId].channelId == _channelId);
+    function channelExists (Channel _channel) internal {
+        require(_channel.address0 != address(0));
     }
 
-    function channelSettlingPeriodStarted (bytes32 _channelId) internal {
-        require(channels[_channelId].settlingPeriodStarted);
+    function channelSettlingPeriodStarted (Channel _channel) internal {
+        require(_channel.settlingPeriodStarted);
     }
 
-    function channelSettlingPeriodNotStarted (bytes32 _channelId) internal {
-        require(!channels[_channelId].settlingPeriodStarted);
+    function channelSettlingPeriodNotStarted (Channel _channel) internal {
+        require(!_channel.settlingPeriodStarted);
     }
 
-    function channelIsNotClosed (bytes32 _channelId) internal {
-        require(!channels[_channelId].closed);
+    function channelIsNotClosed (Channel _channel) internal {
+        require(!_channel.closed);
     }
 
-    function channelIsSettled (bytes32 _channelId) internal {
+    function channelIsSettled (Channel _channel) internal {
         require(
-            channels[_channelId].settlingPeriodStarted && // If the settling period has started
-            block.number >= channels[_channelId].settlingPeriodEnd // And ended
+            _channel.settlingPeriodStarted && // If the settling period has started
+            block.number >= _channel.settlingPeriodEnd // And ended
         );
     }
 
-    function channelIsNotSettled (bytes32 _channelId) internal {
+    function channelIsNotSettled (Channel _channel) internal {
         require(
             !( // Negate the below
-                channels[_channelId].settlingPeriodStarted && // If the settling period is started
-                block.number >= channels[_channelId].settlingPeriodEnd // And ended
+                _channel.settlingPeriodStarted && // If the settling period is started
+                block.number >= _channel.settlingPeriodEnd // And ended
             )
         );
     }
 
-    function balancesEqualTotal (bytes32 _channelId, uint256 _balance0, uint256 _balance1) internal {
-        require(_balance0.add(_balance1) == channels[_channelId].totalBalance);
+    function balancesEqualTotal (Channel _channel, uint256 _balance0, uint256 _balance1) internal {
+        require(_balance0.add(_balance1) == _channel.totalBalance);
     }
 
-    function sequenceNumberIsHighest (bytes32 _channelId, uint256 _sequenceNumber) internal {
-        require(_sequenceNumber > channels[_channelId].sequenceNumber);
+    function sequenceNumberIsHighest (Channel _channel, uint256 _sequenceNumber) internal {
+        require(_sequenceNumber > _channel.sequenceNumber);
     }
 
     function signedBy (
@@ -211,9 +211,10 @@ contract PaymentChannels is ECVerify, ETHWallet {
         bytes _signature0,
         bytes _signature1
     ) public {
-        channelExists(_channelId);
-        channelIsNotSettled(_channelId);
-        sequenceNumberIsHighest(_channelId, _sequenceNumber);
+        Channel storage channel = channels[_channelId];
+        channelExists(channel);
+        channelIsNotSettled(channel);
+        sequenceNumberIsHighest(channel, _sequenceNumber);
 
         bytes32 fingerprint = sha3(
             "updateState",
@@ -250,7 +251,8 @@ contract PaymentChannels is ECVerify, ETHWallet {
         uint256 _bountyAmount,
         bytes _bountySignature
     ) public {
-        channelSettlingPeriodStarted(_channelId);
+        Channel storage channel = channels[_channelId];
+        channelSettlingPeriodStarted(channel);
 
         bytes32 fingerprint = sha3(
             "updateStateWithBounty",
@@ -285,8 +287,9 @@ contract PaymentChannels is ECVerify, ETHWallet {
         bytes32 _channelId,
         bytes _signature
     ) public {
-        channelExists(_channelId);
-        channelSettlingPeriodNotStarted(_channelId);
+        Channel storage channel = channels[_channelId];
+        channelExists(channel);
+        channelSettlingPeriodNotStarted(channel);
 
         bytes32 fingerprint = sha3(
             "startSettlingPeriod",
@@ -314,9 +317,11 @@ contract PaymentChannels is ECVerify, ETHWallet {
     function closeChannel (
         bytes32 _channelId
     ) public {
-        channelExists(_channelId);
-        channelIsSettled(_channelId);
-        balancesEqualTotal(_channelId, channels[_channelId].balance0, channels[_channelId].balance1);
+        Channel storage channel = channels[_channelId];
+
+        channelExists(channel);
+        channelIsSettled(channel);
+        balancesEqualTotal(channel, channels[_channelId].balance0, channels[_channelId].balance1);
 
         incrementBalance(channels[_channelId].address0, channels[_channelId].balance0);
         incrementBalance(channels[_channelId].address1, channels[_channelId].balance1);
@@ -335,9 +340,11 @@ contract PaymentChannels is ECVerify, ETHWallet {
         bytes _signature0,
         bytes _signature1
     ) public {
-        channelExists(_channelId);
-        sequenceNumberIsHighest(_channelId, _sequenceNumber);
-        balancesEqualTotal(_channelId, _balance0, _balance1);
+        Channel storage channel = channels[_channelId];
+
+        channelExists(channel);
+        sequenceNumberIsHighest(channel, _sequenceNumber);
+        balancesEqualTotal(channel, _balance0, _balance1);
 
         bytes32 fingerprint = sha3(
             "closeChannelFast",
@@ -384,12 +391,13 @@ contract PaymentChannels is ECVerify, ETHWallet {
         bytes _signature0,
         bytes _signature1
     ) public {
-        channelExists(_channelId);
-        sequenceNumberIsHighest(_channelId, _sequenceNumber);
-        balancesEqualTotal(_channelId, _oldBalance0, _oldBalance1);
+        Channel storage channel = channels[_channelId];
+
+        channelExists(channel);
+        sequenceNumberIsHighest(channel, _sequenceNumber);
+        balancesEqualTotal(channel, _oldBalance0, _oldBalance1);
         txNotExpired(_expiration);
 
-        Channel storage channel = channels[_channelId];
 
         bytes32 fingerprint = sha3(
             "reDraw",
