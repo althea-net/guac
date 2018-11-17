@@ -116,21 +116,6 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  test("bad amount", async t => {
-    const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await createChannel(instance, channelId, 6, 6, 2);
-    await updateState(instance, channelId, 1, 5, 50);
-    await startSettlingPeriod(instance, channelId);
-    await mineBlocks(5);
-
-    await t.shouldFail(instance.closeChannel(channelId));
-
-    await revertSnapshot(snapshot);
-  });
-
   test("closeChannelFast happy path", async t => {
     const snapshot = await takeSnapshot();
 

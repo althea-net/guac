@@ -56,6 +56,19 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
+  test("updateState bad amount", async t => {
+    const snapshot = await takeSnapshot();
+    const channelId =
+      "0x1000000000000000000000000000000000000000000000000000000000000000";
+
+    await createChannel(instance, channelId, 6, 6, 2);
+
+    await t.shouldFail(updateState(instance, channelId, 1, 5, 50));
+    await updateState(instance, channelId, 1, 5, 7);
+
+    await revertSnapshot(snapshot);
+  });
+
   test("updateState nonexistant channel", async t => {
     const snapshot = await takeSnapshot();
 

@@ -34,43 +34,43 @@ contract PaymentChannels is ECVerify, ETHWallet {
     mapping (bytes32 => Channel) public channels;
     mapping (address => mapping (address => bool)) public channelBetweenPairs;
 
-    function txNotExpired (uint256 _expiration) internal {
+    function txNotExpired (uint256 _expiration) internal view {
         require(block.number < _expiration);
     }
 
-    function channelDoesNotExist (bytes32 _channelId) internal {
+    function channelDoesNotExist (bytes32 _channelId) internal view {
         require(channels[_channelId].channelId != _channelId);
     }
 
-    function noChannelBetweenPair (address _address0, address _address1) internal {
+    function noChannelBetweenPair (address _address0, address _address1) internal view {
         require(_address0 < _address1);
         require(!channelBetweenPairs[_address0][_address1]);
     }
 
-    function channelExists (Channel _channel) internal {
+    function channelExists (Channel _channel) internal pure {
         require(_channel.address0 != address(0));
     }
 
-    function channelSettlingPeriodStarted (Channel _channel) internal {
+    function channelSettlingPeriodStarted (Channel _channel) internal pure {
         require(_channel.settlingPeriodStarted);
     }
 
-    function channelSettlingPeriodNotStarted (Channel _channel) internal {
+    function channelSettlingPeriodNotStarted (Channel _channel) internal pure {
         require(!_channel.settlingPeriodStarted);
     }
 
-    function channelIsNotClosed (Channel _channel) internal {
+    function channelIsNotClosed (Channel _channel) internal pure {
         require(!_channel.closed);
     }
 
-    function channelIsSettled (Channel _channel) internal {
+    function channelIsSettled (Channel _channel) internal view {
         require(
             _channel.settlingPeriodStarted && // If the settling period has started
             block.number >= _channel.settlingPeriodEnd // And ended
         );
     }
 
-    function channelIsNotSettled (Channel _channel) internal {
+    function channelIsNotSettled (Channel _channel) internal view {
         require(
             !( // Negate the below
                 _channel.settlingPeriodStarted && // If the settling period is started
@@ -79,11 +79,11 @@ contract PaymentChannels is ECVerify, ETHWallet {
         );
     }
 
-    function balancesEqualTotal (Channel _channel, uint256 _balance0, uint256 _balance1) internal {
+    function balancesEqualTotal (Channel _channel, uint256 _balance0, uint256 _balance1) internal view {
         require(_balance0.add(_balance1) == _channel.totalBalance);
     }
 
-    function sequenceNumberIsHighest (Channel _channel, uint256 _sequenceNumber) internal {
+    function sequenceNumberIsHighest (Channel _channel, uint256 _sequenceNumber) internal pure {
         require(_sequenceNumber > _channel.sequenceNumber);
     }
 
@@ -215,6 +215,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         channelExists(channel);
         channelIsNotSettled(channel);
         sequenceNumberIsHighest(channel, _sequenceNumber);
+        balancesEqualTotal(channel, _balance0, _balance1);
 
         bytes32 fingerprint = sha3(
             "updateState",
@@ -229,13 +230,13 @@ contract PaymentChannels is ECVerify, ETHWallet {
             fingerprint,
             _signature0,
             _signature1,
-            channels[_channelId].address0,
-            channels[_channelId].address1
+            channel.address0,
+            channel.address1
         );
 
-        channels[_channelId].sequenceNumber = _sequenceNumber;
-        channels[_channelId].balance0 = _balance0;
-        channels[_channelId].balance1 = _balance1;
+        channel.sequenceNumber = _sequenceNumber;
+        channel.balance0 = _balance0;
+        channel.balance1 = _balance1;
     }
 
     function updateStateWithBounty(
@@ -251,7 +252,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         uint256 _bountyAmount,
         bytes _bountySignature
     ) public {
-        Channel storage channel = channels[_channelId];
+        Channel memory channel = channels[_channelId];
         channelSettlingPeriodStarted(channel);
 
         bytes32 fingerprint = sha3(
@@ -300,17 +301,17 @@ contract PaymentChannels is ECVerify, ETHWallet {
         signedByOne(
             fingerprint,
             _signature,
-            channels[_channelId].address0,
-            channels[_channelId].address1
+            channel.address0,
+            channel.address1
         );
 
-        channels[_channelId].settlingPeriodStarted = true;
-        channels[_channelId].settlingPeriodEnd = block.number + channels[_channelId].settlingPeriodLength;
+        channel.settlingPeriodStarted = true;
+        channel.settlingPeriodEnd = block.number + channel.settlingPeriodLength;
         
 
         SettlingStarted(
             _channelId,
-            channels[_channelId].sequenceNumber
+            channel.sequenceNumber
         );
     }
 
@@ -321,12 +322,11 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
         channelExists(channel);
         channelIsSettled(channel);
-        balancesEqualTotal(channel, channels[_channelId].balance0, channels[_channelId].balance1);
 
-        incrementBalance(channels[_channelId].address0, channels[_channelId].balance0);
-        incrementBalance(channels[_channelId].address1, channels[_channelId].balance1);
+        incrementBalance(channel.address0, channel.balance0);
+        incrementBalance(channel.address1, channel.balance1);
 
-        delete channelBetweenPairs[channels[_channelId].address0][channels[_channelId].address1];
+        delete channelBetweenPairs[channel.address0][channel.address1];
         delete channels[_channelId];
     }
 
@@ -359,20 +359,20 @@ contract PaymentChannels is ECVerify, ETHWallet {
             fingerprint,
             _signature0,
             _signature1,
-            channels[_channelId].address0,
-            channels[_channelId].address1
+            channel.address0,
+            channel.address1
         );
 
-        channels[_channelId].closed = true;
+        channel.closed = true;
 
-        channels[_channelId].sequenceNumber = _sequenceNumber;
-        channels[_channelId].balance0 = _balance0;
-        channels[_channelId].balance1 = _balance1;
+        channel.sequenceNumber = _sequenceNumber;
+        channel.balance0 = _balance0;
+        channel.balance1 = _balance1;
 
-        incrementBalance(channels[_channelId].address0, channels[_channelId].balance0);
-        incrementBalance(channels[_channelId].address1, channels[_channelId].balance1);
+        incrementBalance(channel.address0, channel.balance0);
+        incrementBalance(channel.address1, channel.balance1);
 
-        delete channelBetweenPairs[channels[_channelId].address0][channels[_channelId].address1];
+        delete channelBetweenPairs[channel.address0][channel.address1];
         delete channels[_channelId];
     }
 
