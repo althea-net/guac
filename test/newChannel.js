@@ -26,59 +26,38 @@ const {
 module.exports = async (test, instance) => {
   test("newChannel happy path", async t => {
     const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-    //await instance.contract.once("ChannelOpened")
-    // console.log("EVENTN", instance);
 
-    const tx = await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
 
     t.equal(tx.logs[0].event, "ChannelOpened");
+
+    const channelId = tx.logs[0].args._channelId;
 
     t.equal((await instance.balanceOf.call(ACCT_0_ADDR)).c[0], 6);
     t.equal((await instance.balanceOf.call(ACCT_1_ADDR)).c[0], 6);
 
     t.deepEqual(
       JSON.parse(JSON.stringify(await instance.channels(channelId))),
-      [
-        "0x1000000000000000000000000000000000000000000000000000000000000000",
-        ACCT_0_ADDR,
-        ACCT_1_ADDR,
-        "12",
-        "6",
-        "6",
-        "0",
-        "2",
-        false,
-        "0",
-        false
-      ]
+      [ACCT_0_ADDR, ACCT_1_ADDR, "12", "6", "6", "0", "2", false, "0"]
     );
     await revertSnapshot(snapshot);
   });
 
   test("newChannel expired", async t => {
     const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await t.shouldFail(createChannel(instance, channelId, 6, 6, 2, 0));
-    await createChannel(instance, channelId, 6, 6, 2);
+    await t.shouldFail(createChannel(instance, 6, 6, 2, 0));
+    await createChannel(instance, 6, 6, 2);
 
     await revertSnapshot(snapshot);
   });
 
   test("newChannel channel already exists between nodes", async t => {
     const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const channelId2 =
-      "0x2000000000000000000000000000000000000000000000000000000000000000";
-    const channelId3 =
-      "0x3000000000000000000000000000000000000000000000000000000000000000";
 
-    await createChannel(instance, channelId, 6, 6, 2);
-    await t.shouldFail(createChannel(instance, channelId2, 6, 6, 2));
+    const tx = await createChannel(instance, 6, 6, 2);
+    await t.shouldFail(createChannel(instance, 6, 6, 2));
+    const channelId = tx.logs[0].args._channelId;
 
     await updateState(instance, channelId, 1, 5, 7);
     await startSettlingPeriod(instance, channelId);
@@ -86,25 +65,55 @@ module.exports = async (test, instance) => {
 
     await instance.closeChannel(channelId);
 
-    await createChannel(instance, channelId3, 6, 6, 2);
+    await createChannel(instance, 6, 6, 2);
 
     await revertSnapshot(snapshot);
   });
 
   test("newChannel bad sig", async t => {
     const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
 
     await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, { value: 12 });
     await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, { value: 12 });
 
     const expiration = web3.eth.getBlock("latest").number + 5;
 
-    const fingerprint = solSha3(
+    const badFingerprint = solSha3(
       "newChannel derp",
       instance.contract.address,
-      channelId,
+      ACCT_0_ADDR,
+      ACCT_1_ADDR,
+      6,
+      6,
+      expiration,
+      2
+    );
+
+    const badSignature0 = sign(
+      badFingerprint,
+      new Buffer(ACCT_0_PRIVKEY, "hex")
+    );
+    const badSignature1 = sign(
+      badFingerprint,
+      new Buffer(ACCT_1_PRIVKEY, "hex")
+    );
+
+    await t.shouldFail(
+      instance.newChannel(
+        ACCT_0_ADDR,
+        ACCT_1_ADDR,
+        6,
+        6,
+        expiration,
+        2,
+        badSignature0,
+        badSignature1
+      )
+    );
+
+    const fingerprint = solSha3(
+      "newChannel",
+      instance.contract.address,
       ACCT_0_ADDR,
       ACCT_1_ADDR,
       6,
@@ -115,126 +124,8 @@ module.exports = async (test, instance) => {
 
     const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
     const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
-
-    await t.shouldFail(
-      instance.newChannel(
-        channelId,
-        ACCT_0_ADDR,
-        ACCT_1_ADDR,
-        6,
-        6,
-        expiration,
-        2,
-        signature0,
-        signature1
-      )
-    );
-
-    await revertSnapshot(snapshot);
-  });
-
-  test("newChannel bad amount", async t => {
-    const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await t.shouldFail(createChannel(instance, channelId, 6, 130, 2));
-    await revertSnapshot(snapshot);
-  });
-
-  test("newChannel already exists", async t => {
-    const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await createChannel(instance, channelId, 6, 6, 2);
-
-    await t.shouldFail(createChannel(instance, channelId, 6, 6, 2));
-    await revertSnapshot(snapshot);
-  });
-
-  test("newChannel wrong private key", async t => {
-    const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, { value: 12 });
-    await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, { value: 12 });
-
-    const expiration = web3.eth.getBlock("latest").number + 5;
-
-    const fingerprint = solSha3(
-      "newChannel",
-      instance.contract.address,
-      channelId,
-      ACCT_0_ADDR,
-      ACCT_1_ADDR,
-      6,
-      6,
-      expiration,
-      2
-    );
-
-    const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
-    const signature1 = sign(fingerprint, new Buffer(ACCT_2_PRIVKEY, "hex"));
-
-    await t.shouldFail(
-      instance.newChannel(
-        channelId,
-        ACCT_0_ADDR,
-        ACCT_1_ADDR,
-        6,
-        6,
-        expiration,
-        2,
-        signature0,
-        signature1
-      )
-    );
-    await revertSnapshot(snapshot);
-  });
-
-  test("newChannel wrong public key", async t => {
-    const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, { value: 12 });
-    await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, { value: 12 });
-
-    const expiration = web3.eth.getBlock("latest").number + 5;
-
-    const fingerprint = solSha3(
-      "newChannel",
-      instance.contract.address,
-      channelId,
-      ACCT_0_ADDR,
-      ACCT_1_ADDR,
-      6,
-      6,
-      expiration,
-      2
-    );
-
-    const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
-    const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
-
-    await t.shouldFail(
-      instance.newChannel(
-        channelId,
-        ACCT_0_ADDR,
-        ACCT_2_ADDR,
-        6,
-        6,
-        expiration,
-        2,
-        signature0,
-        signature1
-      )
-    );
 
     await instance.newChannel(
-      channelId,
       ACCT_0_ADDR,
       ACCT_1_ADDR,
       6,
@@ -245,6 +136,22 @@ module.exports = async (test, instance) => {
       signature1
     );
 
+    await revertSnapshot(snapshot);
+  });
+
+  test("newChannel bad amount", async t => {
+    const snapshot = await takeSnapshot();
+
+    await t.shouldFail(createChannel(instance, 6, 130, 2));
+    await revertSnapshot(snapshot);
+  });
+
+  test("newChannel already exists", async t => {
+    const snapshot = await takeSnapshot();
+
+    await createChannel(instance, 6, 6, 2);
+
+    await t.shouldFail(createChannel(instance, 6, 6, 2));
     await revertSnapshot(snapshot);
   });
 };

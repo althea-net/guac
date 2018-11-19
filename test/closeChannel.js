@@ -29,10 +29,9 @@ module.exports = async (test, instance) => {
   test("closeChannel happy path", async t => {
     const snapshot = await takeSnapshot();
 
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
 
-    await createChannel(instance, channelId, 6, 6, 2);
     await updateState(instance, channelId, 1, 5, 7);
     await startSettlingPeriod(instance, channelId);
     await mineBlocks(5);
@@ -47,12 +46,12 @@ module.exports = async (test, instance) => {
 
   test("channel does not exist", async t => {
     const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
     const channelIdFake =
       "0x2000000000000000000000000000000000000000000000000000000000000000";
 
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
+
     await updateState(instance, channelId, 1, 5, 7);
     await startSettlingPeriod(instance, channelId);
     await mineBlocks(5);
@@ -66,10 +65,10 @@ module.exports = async (test, instance) => {
 
   test("channel is not settled", async t => {
     const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
+
     await updateState(instance, channelId, 1, 5, 7);
 
     await t.shouldFail(instance.closeChannel(channelId));
@@ -84,10 +83,10 @@ module.exports = async (test, instance) => {
 
   test("channel is already closed", async t => {
     const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
+
     await updateState(instance, channelId, 1, 5, 7);
     await startSettlingPeriod(instance, channelId);
     await mineBlocks(5);
@@ -101,10 +100,10 @@ module.exports = async (test, instance) => {
 
   test("update after close", async t => {
     const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
+
     await updateState(instance, channelId, 1, 5, 7);
     await startSettlingPeriod(instance, channelId);
     await mineBlocks(5);
@@ -116,28 +115,11 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  test("bad amount", async t => {
-    const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await createChannel(instance, channelId, 6, 6, 2);
-    await updateState(instance, channelId, 1, 5, 50);
-    await startSettlingPeriod(instance, channelId);
-    await mineBlocks(5);
-
-    await t.shouldFail(instance.closeChannel(channelId));
-
-    await revertSnapshot(snapshot);
-  });
-
   test("closeChannelFast happy path", async t => {
     const snapshot = await takeSnapshot();
 
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
 
     const fingerprint = solSha3(
       "closeChannelFast",
@@ -164,18 +146,15 @@ module.exports = async (test, instance) => {
   });
 
   test("closeChannelFast nonexistant channel", async t => {
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
     const fingerprint = solSha3(
       "closeChannelFast",
       instance.contract.address,
-      channelId
+      "0x2000000000000000000000000000000000000000000000000000000000000000"
     );
 
     await t.shouldFail(
       instance.closeChannelFast(
-        channelId,
+        "0x2000000000000000000000000000000000000000000000000000000000000000",
         1,
         5,
         7,
@@ -188,10 +167,8 @@ module.exports = async (test, instance) => {
   test("closeChannelFast bad sig", async t => {
     const snapshot = await takeSnapshot();
 
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
 
     const fingerprint = solSha3(
       "closeChannelFast derp",
@@ -219,10 +196,8 @@ module.exports = async (test, instance) => {
   test("closeChannelFast bad amount", async t => {
     const snapshot = await takeSnapshot();
 
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
 
     const fingerprint = solSha3(
       "closeChannelFast",
