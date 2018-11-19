@@ -28,10 +28,10 @@ module.exports = async (test, instance) => {
   // startSettlingPeriod happy path is tested in updateState.js
   test("startSettlingPeriod nonexistant channel", async t => {
     const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
+
     await updateState(instance, channelId, 1, 5, 7);
 
     await t.shouldFail(
@@ -46,11 +46,10 @@ module.exports = async (test, instance) => {
 
   test("startSettlingPeriod already started", async t => {
     const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await createChannel(instance, channelId, 6, 6, 2);
-    await updateState(instance, channelId, 1, 5, 7, "0x");
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
+    await updateState(instance, channelId, 1, 5, 7);
 
     await startSettlingPeriod(instance, channelId);
 
@@ -61,8 +60,9 @@ module.exports = async (test, instance) => {
 
   test("startSettlingPeriod bad sig", async t => {
     const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
+
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
 
     const startSettlingPeriodFingerprint = solSha3(
       "startSettlingPeriod derp",
@@ -70,36 +70,12 @@ module.exports = async (test, instance) => {
       channelId
     );
 
-    await createChannel(instance, channelId, 6, 6, 2);
-    await updateState(instance, channelId, 1, 5, 7, "0x");
+    await updateState(instance, channelId, 1, 5, 7);
 
     await t.shouldFail(
       instance.startSettlingPeriod(
         channelId,
         sign(startSettlingPeriodFingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"))
-      )
-    );
-
-    await revertSnapshot(snapshot);
-  });
-
-  test("startSettlingPeriod wrong private key", async t => {
-    const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-    const startSettlingPeriodFingerprint = solSha3(
-      "startSettlingPeriod",
-      instance.contract.address,
-      channelId
-    );
-
-    await createChannel(instance, channelId, 6, 6, 2);
-    await updateState(instance, channelId, 1, 5, 7, "0x");
-
-    await t.shouldFail(
-      instance.startSettlingPeriod(
-        channelId,
-        sign(startSettlingPeriodFingerprint, new Buffer(ACCT_2_PRIVKEY, "hex"))
       )
     );
 

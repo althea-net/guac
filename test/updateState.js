@@ -27,29 +27,15 @@ const {
 module.exports = async (test, instance) => {
   test("updateState happy path", async t => {
     const snapshot = await takeSnapshot();
-    const eventLog = instance.allEvents();
 
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
 
     await updateState(instance, channelId, 1, 5, 7);
 
     t.deepEqual(
       JSON.parse(JSON.stringify(await instance.channels(channelId))),
-      [
-        channelId,
-        ACCT_0_ADDR,
-        ACCT_1_ADDR,
-        "12",
-        "5",
-        "7",
-        "1",
-        "2",
-        false,
-        "0"
-      ]
+      [ACCT_0_ADDR, ACCT_1_ADDR, "12", "5", "7", "1", "2", false, "0"]
     );
 
     await revertSnapshot(snapshot);
@@ -57,10 +43,9 @@ module.exports = async (test, instance) => {
 
   test("updateState bad amount", async t => {
     const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
 
     await t.shouldFail(updateState(instance, channelId, 1, 5, 50));
     await updateState(instance, channelId, 1, 5, 7);
@@ -71,18 +56,10 @@ module.exports = async (test, instance) => {
   test("updateState nonexistant channel", async t => {
     const snapshot = await takeSnapshot();
 
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
 
-    await createChannel(instance, channelId, 6, 6, 2);
-
-    await updateState(
-      instance,
-      "0x1000000000000000000000000000000000000000000000000000000000000000",
-      1,
-      5,
-      7
-    );
+    await updateState(instance, channelId, 1, 5, 7);
 
     await t.shouldFail(
       updateState(
@@ -99,10 +76,9 @@ module.exports = async (test, instance) => {
 
   test("channel closed before updateState", async t => {
     const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
     await startSettlingPeriod(instance, channelId);
     await updateState(instance, channelId, 1, 5, 7);
     await mineBlocks(5);
@@ -114,10 +90,9 @@ module.exports = async (test, instance) => {
 
   test("updateState low seq #", async t => {
     const snapshot = await takeSnapshot();
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
 
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
     await updateState(instance, channelId, 3, 5, 7);
 
     await t.shouldFail(updateState(instance, channelId, 2, 5, 7));
@@ -128,10 +103,8 @@ module.exports = async (test, instance) => {
   test("updateState bad fingerprint (string)", async t => {
     const snapshot = await takeSnapshot();
 
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
     await updateState(instance, channelId, 1, 5, 7);
 
     const fingerprint = solSha3(
@@ -156,10 +129,8 @@ module.exports = async (test, instance) => {
   test("updateState wrong private key", async t => {
     const snapshot = await takeSnapshot();
 
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
 
     const fingerprint = solSha3(
       "updateState",
@@ -183,17 +154,15 @@ module.exports = async (test, instance) => {
   test("updateStateWithBounty happy path", async t => {
     const snapshot = await takeSnapshot();
 
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
 
     await updateState(instance, channelId, 1, 5, 7);
 
-    const tx = await startSettlingPeriod(instance, channelId);
+    const settlingTx = await startSettlingPeriod(instance, channelId);
 
-    t.equal(tx.logs[0].event, "SettlingStarted");
-    t.equal(tx.logs[0].args["_sequenceNumber"].toString(), "1");
+    t.equal(settlingTx.logs[0].event, "SettlingStarted");
+    t.equal(settlingTx.logs[0].args["_sequenceNumber"].toString(), "1");
 
     const sequenceNumber = 2;
     const balance0 = 4;
@@ -253,7 +222,6 @@ module.exports = async (test, instance) => {
     );
 
     t.deepEqual(channel, [
-      channelId,
       ACCT_0_ADDR,
       ACCT_1_ADDR,
       "12",
@@ -262,7 +230,7 @@ module.exports = async (test, instance) => {
       "2",
       "2",
       true,
-      channel[9]
+      channel[8]
     ]);
 
     await revertSnapshot(snapshot);
@@ -271,15 +239,13 @@ module.exports = async (test, instance) => {
   test("updateStateWithBounty settlingPeriod not started", async t => {
     const snapshot = await takeSnapshot();
 
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
     const sequenceNumber = 1;
 
     const balance0 = 5;
     const balance1 = 7;
 
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
 
     const updateStateFingerprint = solSha3(
       "updateState",
@@ -350,15 +316,13 @@ module.exports = async (test, instance) => {
   test("updateStateWithBounty bad sig", async t => {
     const snapshot = await takeSnapshot();
 
-    const channelId =
-      "0x1000000000000000000000000000000000000000000000000000000000000000";
-
     const sequenceNumber = 1;
 
     const balance0 = 5;
     const balance1 = 7;
 
-    await createChannel(instance, channelId, 6, 6, 2);
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
 
     await startSettlingPeriod(instance, channelId);
 

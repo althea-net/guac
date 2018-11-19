@@ -127,7 +127,7 @@ function filterLogs(logs) {
 
 async function createChannel(
   instance,
-  channelId,
+  // channelId,
   balance0,
   balance1,
   settlingPeriod,
@@ -140,7 +140,6 @@ async function createChannel(
   const fingerprint = solSha3(
     string,
     instance.contract.address,
-    channelId,
     ACCT_0_ADDR,
     ACCT_1_ADDR,
     balance0,
@@ -153,7 +152,6 @@ async function createChannel(
   const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
 
   return instance.newChannel(
-    channelId,
     ACCT_0_ADDR,
     ACCT_1_ADDR,
     balance0,

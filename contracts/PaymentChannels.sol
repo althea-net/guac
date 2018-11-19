@@ -5,7 +5,6 @@ import "./ETHWallet.sol";
 
 contract PaymentChannels is ECVerify, ETHWallet {
     struct Channel {
-        bytes32 channelId;
         address address0;
         address address1;
         uint256 totalBalance;
@@ -18,7 +17,9 @@ contract PaymentChannels is ECVerify, ETHWallet {
     }
 
     event ChannelOpened(
-        bytes32 indexed _channelId
+        address indexed address0,
+        address indexed address1,
+        bytes32 _channelId
     );
 
     event SettlingStarted(
@@ -38,7 +39,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
     }
 
     function channelDoesNotExist (bytes32 _channelId) internal view {
-        require(channels[_channelId].channelId != _channelId);
+        require(channels[_channelId].address0 == address(0));
     }
 
     function noChannelBetweenPair (address _address0, address _address1) internal view {
@@ -128,7 +129,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
     }
 
     function newChannel(
-        bytes32 _channelId,
+        // bytes32 _channelId,
 
         address _address0,
         address _address1,
@@ -142,21 +143,16 @@ contract PaymentChannels is ECVerify, ETHWallet {
         bytes _signature0,
         bytes _signature1
     ) public {
-        channelDoesNotExist(_channelId);
         noChannelBetweenPair(_address0, _address1);
         txNotExpired(_expiration);
 
         bytes32 fingerprint = sha3(
             "newChannel",
             address(this),
-            _channelId,
-
             _address0,
             _address1,
-
             _balance0,
             _balance1,
-
             _expiration,
             _settlingPeriodLength
         );
@@ -169,8 +165,15 @@ contract PaymentChannels is ECVerify, ETHWallet {
             _address1
         );
 
-        channels[_channelId] = Channel(
-            _channelId,                  // bytes32 channelId;
+        bytes32 channelId = sha3( 
+            block.number,
+            address(this),
+            _address0,
+            _address1
+        ); 
+
+
+        channels[channelId] = Channel(
             _address0,                   // address address0;
             _address1,                   // address address1;
             _balance0.add(_balance1),    // uint256 totalBalance;
@@ -187,7 +190,9 @@ contract PaymentChannels is ECVerify, ETHWallet {
         channelBetweenPairs[_address0][_address1] = true;
 
         ChannelOpened(
-            _channelId
+            _address0,
+            _address1,
+            channelId
         );
 
         decrementBalance(_address0, _balance0);
@@ -300,7 +305,6 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
         channel.settlingPeriodStarted = true;
         channel.settlingPeriodEnd = block.number + channel.settlingPeriodLength;
-        
 
         SettlingStarted(
             _channelId,
