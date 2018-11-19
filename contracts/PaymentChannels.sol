@@ -2,7 +2,7 @@ pragma solidity ^0.4.11;
 import "./ECVerify.sol";
 import "./ETHWallet.sol";
 
-
+/// @dev To test this contract first install node 8 or above. Then run `npm install`, `npm run testrpc` (keep this running in the background), `npm run migrate`, finally run `npm run test` to run the unit tests.
 contract PaymentChannels is ECVerify, ETHWallet {
     struct Channel {
         address address0;
@@ -128,9 +128,15 @@ contract PaymentChannels is ECVerify, ETHWallet {
         ethBalances[_addr] = ethBalances[_addr].sub(_value);
     }
 
-    function newChannel(
-        // bytes32 _channelId,
+    /// @dev Create a new channel between two nodes. _address0 must be numerically smaller than _address1. This will generate a channelId which is used to make other transactions on this channel. It emits a ChannelOpened event which is indexed by _address0, _address1 and also contains the _channelId.
+    /// @param _address0 The numerically lower address of one of the channel participants. 
+    /// @param _address1 The numerically higher address of the other channel participant.
+    /// @param _balance0 The amount that _address0 would like to lock in the channel.
+    /// @param _balance1 The amount that _address1 would like to lock in the channel. Address0 and address1 must have enough money to cover these amounts, and it is withdrawn from their accounts when this tx is submitted. 
+    /// @param _expiration The block that this newChannel tx will expire. The purpose of the expiration is to prevent a scenario where an attacker submits an old, forgotten newChannel tx in the future, causing an unexpected withdrawal of our funds into the channel. If this is set to be too soon in the future, then it may not be possible to get this tx countersigned and onto the blockchain in time.
+    /// @param _settlingPeriodLength This is the amount of time that the channel will remain in settling mode during a contentious close. If this is set too short, it may not be possible for a node (or bounty hunter) to prevent an old update attack before the settling period ends. If this is set too long, it will allow an attacker to unfairly lock up an honest node's funds for an unreasonable amount of time.
 
+    function newChannel(
         address _address0,
         address _address1,
 
@@ -199,6 +205,12 @@ contract PaymentChannels is ECVerify, ETHWallet {
         decrementBalance(_address1, _balance1);
     }
 
+    /// @dev Update the balances in the channel to make a payment from one node to another. 
+    /// @param _channelId The channelId of the channel to update.
+    /// @param _sequenceNumber The sequence number of the update. If an update with a higher sequence number has already been added, this updateState tx will fail.
+    /// @param _balance0 The balance of address0.
+    /// @param _balance1 The balance of address1. These balances must add up to the channel's totalBalance.
+    
     function updateState(
         bytes32 _channelId,
         uint256 _sequenceNumber,
@@ -236,6 +248,16 @@ contract PaymentChannels is ECVerify, ETHWallet {
         channel.balance0 = _balance0;
         channel.balance1 = _balance1;
     }
+
+    /// @dev Submit an updateTx on behalf of another node and recieve a bounty if this saves them from an old update attack.
+    /// @param _channelId The channelId of the channel to update.
+    /// @param _sequenceNumber The sequence number of the update. If an update with a higher sequence number has already been added, this updateState tx will fail.
+    /// @param _balance0 The balance of address0.
+    /// @param _balance1 The balance of address1. These balances must add up to the channel's totalBalance.
+    /// @param _signature0 The signature of address0 on the updateTx.
+    /// @param _signature1 The signature of address1 on the updateTx.
+    /// @param _bountyAmount The amount of the bounty that will be granted to the node submitting this transaction if it will prevent an old update attack on address0 or address1.
+    /// @param _bountySignature The signature of the account paying the bounty.
 
     function updateStateWithBounty(
         bytes32 _channelId,
@@ -282,50 +304,11 @@ contract PaymentChannels is ECVerify, ETHWallet {
         );
     }
 
-    function startSettlingPeriod (
-        bytes32 _channelId,
-        bytes _signature
-    ) public {
-        Channel storage channel = channels[_channelId];
-        channelExists(channel);
-        channelSettlingPeriodNotStarted(channel);
-
-        bytes32 fingerprint = sha3(
-            "startSettlingPeriod",
-            address(this),
-            _channelId
-        );
-
-        signedByOne(
-            fingerprint,
-            _signature,
-            channel.address0,
-            channel.address1
-        );
-
-        channel.settlingPeriodStarted = true;
-        channel.settlingPeriodEnd = block.number + channel.settlingPeriodLength;
-
-        SettlingStarted(
-            _channelId,
-            channel.sequenceNumber
-        );
-    }
-
-    function closeChannel (
-        bytes32 _channelId
-    ) public {
-        Channel storage channel = channels[_channelId];
-
-        channelExists(channel);
-        channelIsSettled(channel);
-
-        incrementBalance(channel.address0, channel.balance0);
-        incrementBalance(channel.address1, channel.balance1);
-
-        delete channelBetweenPairs[channel.address0][channel.address1];
-        delete channels[_channelId];
-    }
+    /// @dev Close the channel and transfer the current balances back to the participants. 
+    /// @param _channelId The channelId of the channel to update.
+    /// @param _sequenceNumber The sequence number of the update. If an update with a higher sequence number has already been added, this updateState tx will fail.
+    /// @param _balance0 The balance of address0.
+    /// @param _balance1 The balance of address1. These balances must add up to the channel's totalBalance, and will be sent to address0 and address1 when this tx is submitted.
 
     function closeChannelFast (
         bytes32 _channelId,
@@ -370,6 +353,68 @@ contract PaymentChannels is ECVerify, ETHWallet {
         delete channelBetweenPairs[channel.address0][channel.address1];
         delete channels[_channelId];
     }
+
+    /// @dev Start the channel's settling period. This is used in the event of a contentious channel closing, where the participants can not agree to sign a closeChannelFast tx. This only requires the signature of one of the participants.
+    /// @param _channelId The Id of the channel to settle.
+    /// @param _signature The signature of address0 or address1.
+
+    function startSettlingPeriod (
+        bytes32 _channelId,
+        bytes _signature
+    ) public {
+        Channel storage channel = channels[_channelId];
+        channelExists(channel);
+        channelSettlingPeriodNotStarted(channel);
+
+        bytes32 fingerprint = sha3(
+            "startSettlingPeriod",
+            address(this),
+            _channelId
+        );
+
+        signedByOne(
+            fingerprint,
+            _signature,
+            channel.address0,
+            channel.address1
+        );
+
+        channel.settlingPeriodStarted = true;
+        channel.settlingPeriodEnd = block.number + channel.settlingPeriodLength;
+
+        SettlingStarted(
+            _channelId,
+            channel.sequenceNumber
+        );
+    }
+
+    /// @dev Close the channel after a settling period has been started and has ended, transfering the balances in the last updateState tx back to the participants. This is only used in a contentious closing, where startSettlingPeriod has already been called.
+    /// @param _channelId The Id of the channel to be closed.
+
+    function closeChannel (
+        bytes32 _channelId
+    ) public {
+        Channel storage channel = channels[_channelId];
+
+        channelExists(channel);
+        channelIsSettled(channel);
+
+        incrementBalance(channel.address0, channel.balance0);
+        incrementBalance(channel.address1, channel.balance1);
+
+        delete channelBetweenPairs[channel.address0][channel.address1];
+        delete channels[_channelId];
+    }
+
+    /// @dev Refill or withdraw money from a channel which is currently open. This is equivalent to both participants signing and sumbitting a closeChannelFast tx followed by a newChannel tx, except that the channelId, the settlingPeriod, and the current sequenceNumber do not change. This logs a ChannelReDrawn event containing the channelId
+    /// @param _channelId The Id of the channel to ReDraw.
+    /// @param _sequenceNumber The channel's current sequenceNumber.
+    /// @param _oldBalance0 The balance of address0.
+    /// @param _oldBalance1 The balance of address1.These balances must add up to the channel's totalBalance, and will be sent to address0 and address1 when this tx is submitted.
+    /// @param _newBalance0 The intended new balance of address0.
+    /// @param _newBalance1 The intended new balance of address1. Address0 and address1 must have enough money to cover these amounts, and it is withdrawn from their accounts when this tx is submitted. 
+    /// @param _expiration The block that this tx expires. See documentation for the newChannel tx for more detail on why this exists.
+
 
     function reDraw (
         bytes32 _channelId,
