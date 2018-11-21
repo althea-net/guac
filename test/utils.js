@@ -34,28 +34,25 @@ function sleep(time) {
 }
 
 let snapshotInc = 0;
-
 async function takeSnapshot() {
-  const id = ++snapshotInc;
-  let res = await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
+  //eslint-disable-next-line
+  const {error, result} = await p(web3.currentProvider.send)({
     jsonrpc: "2.0",
     method: "evm_snapshot",
-    id
-  });
-  // console.log("took snapshot with id: ", id, " result: ", res.result);
-  return res.result;
+    id: snapshotInc++
+  })
+  return result
 }
 
 async function revertSnapshot(snapshotId) {
-  const id = snapshotInc;
-  await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
+  await p(web3.currentProvider.send)({
     jsonrpc: "2.0",
     method: "evm_revert",
     params: [snapshotId],
-    id
-  });
-  // console.log("restored snapshot with id: ", id, " snapshotId: ", snapshotId);
+    id: snapshotInc++
+  })
 }
+
 
 async function mineBlock() {
   await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
