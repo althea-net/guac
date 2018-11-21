@@ -1,6 +1,5 @@
 const leftPad = require("left-pad");
 const p = require("util").promisify;
-const ethUtils = require("ethereumjs-util");
 const BN = require("bn.js");
 
 const {
@@ -16,7 +15,6 @@ module.exports = {
   revertSnapshot,
   solSha3,
   sign,
-  ecrecover,
   filterLogs,
   mineBlocks,
   createChannel,
@@ -110,15 +108,6 @@ function sign(msgHash, privKey) {
   return `0x${sig.r.toString("hex")}${sig.s.toString("hex")}${sig.v.toString(
     16
   )}`;
-}
-
-function ecrecover(msg, sig) {
-  const r = ethUtils.toBuffer(sig.slice(0, 66));
-  const s = ethUtils.toBuffer("0x" + sig.slice(66, 130));
-  const v = 27 + parseInt(sig.slice(130, 132));
-  const m = ethUtils.toBuffer(msg);
-  const pub = ethUtils.ecrecover(m, v, r, s);
-  return "0x" + ethUtils.pubToAddress(pub).toString("hex");
 }
 
 function filterLogs(logs) {
@@ -250,3 +239,4 @@ async function reDraw(
     signature1
   );
 }
+*/
