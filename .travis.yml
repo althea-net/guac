@@ -1,0 +1,21 @@
+language: node_js
+node_js: "8.12.0"
+
+cache:
+  yarn: true
+  directories:
+    - node_modules
+
+addons:
+  apt:
+    packages:
+      - build-essential
+
+install:
+  - yarn install
+
+script:
+  - npm run testrpc > /dev/null &
+  - sleep 5
+  - npm run migrate
+  - npm run test
