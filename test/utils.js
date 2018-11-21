@@ -1,4 +1,3 @@
-const leftPad = require("left-pad");
 const p = require("util").promisify;
 const BN = require("bn.js");
 const { joinSignature } = require("ethers").utils
@@ -70,34 +69,6 @@ async function mineBlocks(count) {
     await mineBlock();
     i++;
   }
-}
-
-function toSolUint256(num) {
-  return leftPad(num.toString(16), 64, 0);
-}
-
-function toSolInt256(num) {
-  return new BN(num).toTwos(256).toString(16, 64);
-}
-
-function solSha3(...args) {
-  args = args.map(arg => {
-    if (typeof arg === "string") {
-      if (arg.substring(0, 2) === "0x") {
-        return arg.slice(2);
-      } else {
-        return web3.toHex(arg).slice(2);
-      }
-    }
-
-    if (typeof arg === "number") {
-      return leftPad(arg.toString(16), 64, 0);
-    }
-  });
-
-  args = args.join("");
-
-  return web3.sha3(args, { encoding: "hex" });
 }
 
 function sign(fingerprint, signer) {
