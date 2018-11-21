@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.24;
 import "./ECVerify.sol";
 import "./ETHWallet.sol";
 
@@ -152,7 +152,8 @@ contract PaymentChannels is ECVerify, ETHWallet {
         noChannelBetweenPair(_address0, _address1);
         txNotExpired(_expiration);
 
-        bytes32 fingerprint = sha3(
+        bytes32 fingerprint = keccak256(
+          abi.encodePacked(
             "newChannel",
             address(this),
             _address0,
@@ -161,6 +162,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
             _balance1,
             _expiration,
             _settlingPeriodLength
+          )
         );
 
         signedByBoth(
@@ -171,11 +173,13 @@ contract PaymentChannels is ECVerify, ETHWallet {
             _address1
         );
 
-        bytes32 channelId = sha3( 
+        bytes32 channelId = keccak256( 
+          abi.encodePacked(
             block.number,
             address(this),
             _address0,
             _address1
+          )
         ); 
 
 
@@ -227,13 +231,15 @@ contract PaymentChannels is ECVerify, ETHWallet {
         sequenceNumberIsHighest(channel, _sequenceNumber);
         balancesEqualTotal(channel, _balance0, _balance1);
 
-        bytes32 fingerprint = sha3(
+        bytes32 fingerprint = keccak256(
+          abi.encodePacked(
             "updateState",
             address(this),
             _channelId,
             _sequenceNumber,
             _balance0,
             _balance1
+          )
         );
 
         signedByBoth(
@@ -275,7 +281,8 @@ contract PaymentChannels is ECVerify, ETHWallet {
         Channel memory channel = channels[_channelId];
         channelSettlingPeriodStarted(channel);
 
-        bytes32 fingerprint = sha3(
+        bytes32 fingerprint = keccak256(
+          abi.encodePacked(
             "updateStateWithBounty",
             address(this),
             _channelId,
@@ -285,6 +292,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
             _signature0,
             _signature1,
             _bountyAmount
+          )
         );
 
         address bountyPayer = ecrecovery(fingerprint, _bountySignature);
@@ -326,13 +334,15 @@ contract PaymentChannels is ECVerify, ETHWallet {
         sequenceNumberIsHighest(channel, _sequenceNumber);
         balancesEqualTotal(channel, _balance0, _balance1);
 
-        bytes32 fingerprint = sha3(
+        bytes32 fingerprint = keccak256(
+          abi.encodePacked(
             "closeChannelFast",
             address(this),
             _channelId,
             _sequenceNumber,
             _balance0,
             _balance1
+          )
         );
 
         signedByBoth(
@@ -366,10 +376,12 @@ contract PaymentChannels is ECVerify, ETHWallet {
         channelExists(channel);
         channelSettlingPeriodNotStarted(channel);
 
-        bytes32 fingerprint = sha3(
+        bytes32 fingerprint = keccak256(
+          abi.encodePacked(
             "startSettlingPeriod",
             address(this),
             _channelId
+          )
         );
 
         signedByOne(
@@ -439,7 +451,8 @@ contract PaymentChannels is ECVerify, ETHWallet {
         txNotExpired(_expiration);
 
 
-        bytes32 fingerprint = sha3(
+        bytes32 fingerprint = keccak256(
+          abi.encodePacked(
             "reDraw",
             address(this),
             _channelId,
@@ -452,6 +465,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
             _newBalance1,
 
             _expiration
+          )
         );
 
         signedByBoth(

@@ -7,11 +7,11 @@ const closeChannel = require("./closeChannel.js");
 const redraw = require("./redraw.js");
 const PaymentChannels = artifacts.require("../contracts/PaymentChannels.sol");
 
-(async () => {
+module.exports = async () => {
   const instance = await PaymentChannels.deployed();
   newChannel(test, instance);
   updateState(test, instance);
   startSettlingPeriod(test, instance);
   closeChannel(test, instance);
   redraw(test, instance);
-})();
+}
