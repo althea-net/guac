@@ -1,12 +1,12 @@
 const leftPad = require("left-pad");
 const p = require("util").promisify;
 const BN = require("bn.js");
+const { joinSignature } = require("ethers").utils
 
 const {
-  ACCT_0_PRIVKEY,
-  ACCT_0_ADDR,
-  ACCT_1_PRIVKEY,
-  ACCT_1_ADDR
+  ACCT_A,
+  ACCT_B,
+  ACCT_C,
 } = require("./constants.js");
 
 module.exports = {
@@ -100,14 +100,8 @@ function solSha3(...args) {
   return web3.sha3(args, { encoding: "hex" });
 }
 
-function sign(msgHash, privKey) {
-  if (typeof msgHash === "string" && msgHash.slice(0, 2) === "0x") {
-    msgHash = Buffer.alloc(32, msgHash.slice(2), "hex");
-  }
-  const sig = ethUtils.ecsign(msgHash, privKey);
-  return `0x${sig.r.toString("hex")}${sig.s.toString("hex")}${sig.v.toString(
-    16
-  )}`;
+function sign(fingerprint, signer) {
+  return joinSignature(signer.signDigest(fingerprint))
 }
 
 function filterLogs(logs) {
@@ -123,26 +117,26 @@ async function createChannel(
   string = "newChannel",
   expiration = web3.eth.getBlock("latest").number + 5
 ) {
-  await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, { value: 12 });
-  await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, { value: 12 });
+  await instance.depositToAddress.sendTransaction(ACCT_A.address, { value: 12 });
+  await instance.depositToAddress.sendTransaction(ACCT_B.address, { value: 12 });
 
   const fingerprint = solSha3(
     string,
     instance.contract.address,
-    ACCT_0_ADDR,
-    ACCT_1_ADDR,
+    ACCT_A.address,
+    ACCT_B.address,
     balance0,
     balance1,
     expiration,
     settlingPeriod
   );
 
-  const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
-  const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
+  const signature0 = sign(fingerprint, ACCT_A));
+  const signature1 = sign(fingerprint, ACCT_B);
 
   return instance.newChannel(
-    ACCT_0_ADDR,
-    ACCT_1_ADDR,
+    ACCT_A.address,
+    ACCT_B.address,
     balance0,
     balance1,
     expiration,
@@ -168,8 +162,8 @@ async function updateState(
     balance1
   );
 
-  const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
-  const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
+  const signature0 = sign(fingerprint, ACCT_A);
+  const signature1 = sign(fingerprint, ACCT_B);
 
   await instance.updateState(
     channelId,
@@ -190,7 +184,7 @@ async function startSettlingPeriod(instance, channelId) {
 
   return instance.startSettlingPeriod(
     channelId,
-    sign(startSettlingPeriodFingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"))
+    sign(startSettlingPeriodFingerprint, ACCT_A)
   );
 }
 
@@ -224,8 +218,8 @@ async function reDraw(
     expiration
   );
 
-  const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
-  const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
+  const signature0 = sign(fingerprint, ACCT_A);
+  const signature1 = sign(fingerprint, ACCT_B);
 
   return instance.reDraw(
     channelId,
