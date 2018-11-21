@@ -1,6 +1,8 @@
 const p = require("util").promisify;
-const BN = require("bn.js");
 const { joinSignature } = require("ethers").utils
+const web3 =  require("web3").utils
+
+const solSha3 = web3.utils.soliditySha3
 
 const {
   ACCT_A,
