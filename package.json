@@ -16,10 +16,10 @@
     "prettier": "^1.5.3"
   },
   "scripts": {
-    "test": "truffle exec test/runTests.js",
+    "test": "truffle test",
     "compile": "truffle compile",
     "migrate": "truffle migrate --reset",
-    "ganache": "ganache-cli -m -u 0 -u 1 -u 2 'cook mango twist then skin sort option civil have still rather guilt'",
+    "ganache": "ganache-cli -m 'cook mango twist then skin sort option civil have still rather guilt'",
     "prettier": "prettier --write **/**.js",
     "docs": "solmd ./contracts/PaymentChannels.sol --dest ./readme.md"
   },
