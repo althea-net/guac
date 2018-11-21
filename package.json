@@ -1,42 +1,36 @@
 {
-  "name": "truffletest",
+  "name": "guac",
   "version": "1.0.0",
   "description": "",
-  "main": "truffle.js",
   "directories": {
     "test": "test"
   },
   "dependencies": {
-    "bn.js": "^4.11.7",
-    "ethereumjs-abi": "^0.6.4"
+    "ethers": "^4.0.12",
+    "ganache-cli": "^6.2.1",
+    "truffle": "^5.0.0-beta.1"
   },
   "devDependencies": {
     "solmd": "^0.3.0",
-    "blue-tape": "^1.0.0",
     "eslint": "^4.1.1",
-    "ethereumjs-testrpc": "^6.0.3",
-    "ethereumjs-util": "^5.1.2",
-    "left-pad": "^1.1.3",
-    "prettier": "^1.5.3",
-    "truffle": "^4.0.4"
+    "prettier": "^1.5.3"
   },
   "scripts": {
-    "test": "truffle test",
+    "test": "truffle exec test/runTests.js",
     "compile": "truffle compile",
     "migrate": "truffle migrate --reset",
-    "testrpc":
-      "testrpc -m -u 0 -u 1 -u 2 'cook mango twist then skin sort option civil have still rather guilt'",
+    "ganache": "ganache-cli -m -u 0 -u 1 -u 2 'cook mango twist then skin sort option civil have still rather guilt'",
     "prettier": "prettier --write **/**.js",
     "docs": "solmd ./contracts/PaymentChannels.sol --dest ./readme.md"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jtremback/guac.git"
+    "url": "git+https://github.com/althea-mesh/guac.git"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jtremback/guac/issues"
+    "url": "https://github.com/alteah-mesh/guac/issues"
   },
-  "homepage": "https://github.com/jtremback/guac#readme"
+  "homepage": "https://github.com/althea-mesh/guac#readme"
 }
