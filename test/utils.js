@@ -1,6 +1,5 @@
 const p = require("util").promisify;
 const { joinSignature } = require("ethers").utils
-const web3 =  require("web3").utils
 
 const solSha3 = web3.utils.soliditySha3
 
@@ -21,8 +20,6 @@ module.exports = {
   createChannel,
   updateState,
   startSettlingPeriod,
-  toSolUint256,
-  toSolInt256,
   closeChannel,
   reDraw
 };
@@ -34,6 +31,7 @@ function sleep(time) {
 }
 
 let snapshotInc = 0;
+
 async function takeSnapshot() {
   //eslint-disable-next-line
   const {error, result} = await p(web3.currentProvider.send)({
@@ -85,14 +83,18 @@ async function createChannel(
   balance1,
   settlingPeriod,
   string = "newChannel",
-  expiration = web3.eth.getBlock("latest").number + 5
+  expiration = null
 ) {
-  await instance.depositToAddress.sendTransaction(ACCT_A.address, { value: 12 });
-  await instance.depositToAddress.sendTransaction(ACCT_B.address, { value: 12 });
+
+  if(!expiration) {
+    expiration = (await web3.eth.getBlock("latest")).number + 5
+  }
+  await instance.depositToAddress(ACCT_A.address, { value: 12 });
+  await instance.depositToAddress(ACCT_B.address, { value: 12 });
 
   const fingerprint = solSha3(
     string,
-    instance.contract.address,
+    instance.address,
     ACCT_A.address,
     ACCT_B.address,
     balance0,
@@ -101,7 +103,7 @@ async function createChannel(
     settlingPeriod
   );
 
-  const signature0 = sign(fingerprint, ACCT_A));
+  const signature0 = sign(fingerprint, ACCT_A);
   const signature1 = sign(fingerprint, ACCT_B);
 
   return instance.newChannel(
@@ -125,7 +127,7 @@ async function updateState(
 ) {
   const fingerprint = solSha3(
     "updateState",
-    instance.contract.address,
+    instance.address,
     channelId,
     sequenceNumber,
     balance0,
@@ -148,7 +150,7 @@ async function updateState(
 async function startSettlingPeriod(instance, channelId) {
   const startSettlingPeriodFingerprint = solSha3(
     "startSettlingPeriod",
-    instance.contract.address,
+    instance.address,
     channelId
   );
 
@@ -178,7 +180,7 @@ async function reDraw(
 ) {
   const fingerprint = solSha3(
     "reDraw",
-    instance.contract.address,
+    instance.address,
     channelId,
     sequenceNumber,
     oldBalance0,
@@ -203,4 +205,3 @@ async function reDraw(
     signature1
   );
 }
-*/
