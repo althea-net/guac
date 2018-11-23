@@ -1,16 +1,5 @@
-// cook mango twist then skin sort option civil have still rather guilt
-
-const test = require("blue-tape");
-const p = require("util").promisify;
-
-const {
-  ACCT_0_PRIVKEY,
-  ACCT_1_PRIVKEY,
-  ACCT_0_ADDR,
-  ACCT_1_ADDR,
-  ACCT_2_PRIVKEY,
-  ACCT_2_ADDR
-} = require("./constants.js");
+const { assertRevert } = require("./helpers/assertRevert.js")
+const { ACCT_A, ACCT_B,} = require("./constants.js");
 
 const {
   createChannel,
@@ -23,40 +12,59 @@ const {
   revertSnapshot
 } = require("./utils.js");
 
-module.exports = async (test, instance) => {
-  test("newChannel happy path", async t => {
+module.exports = describe("New Channel", () => {
+
+  let instance
+  before(async () => {
+    instance = await artifacts
+      .require("../contracts/PaymentChannels.sol")
+      .new()
+  })
+
+  it.only("newChannel happy path", async () => {
     const snapshot = await takeSnapshot();
 
     const tx = await createChannel(instance, 6, 6, 2);
-
-    t.equal(tx.logs[0].event, "ChannelOpened");
-
+    assert.equal(tx.logs[0].event, "ChannelOpened");
     const channelId = tx.logs[0].args._channelId;
 
-    t.equal((await instance.balanceOf.call(ACCT_0_ADDR)).c[0], 6);
-    t.equal((await instance.balanceOf.call(ACCT_1_ADDR)).c[0], 6);
+    assert.equal((await instance.balanceOf(ACCT_A.address)).toNumber(), 6);
+    assert.equal((await instance.balanceOf(ACCT_B.address)).toNumber(), 6);
 
-    t.deepEqual(
-      JSON.parse(JSON.stringify(await instance.channels(channelId))),
-      [ACCT_0_ADDR, ACCT_1_ADDR, "12", "6", "6", "0", "2", false, "0"]
+    // This for loop is to remove the extra values of the channels
+    // call. New web3 returns a JSON object so this just prepares
+    // the extra values.
+    let channel = await instance.channels(channelId)
+    let compare = []
+    for(var i = 0; i < (Object.keys(channel).length)/2; i++) {
+      // web3 1 returns BN so just converting to string
+      if(web3.utils.isBN(channel[i])) {
+        channel[i] = channel[i].toString()
+      }
+      compare.push(channel[i])
+    }
+
+    assert.deepEqual(
+      compare,
+      [ACCT_A.address, ACCT_B.address, "12", "6", "6", "0", "2", false, "0"]
     );
     await revertSnapshot(snapshot);
   });
 
-  test("newChannel expired", async t => {
+  it("newChannel expired", async () => {
     const snapshot = await takeSnapshot();
 
-    await t.shouldFail(createChannel(instance, 6, 6, 2, 0));
+    await assertRevert(createChannel(instance, 6, 6, 2, 0))
     await createChannel(instance, 6, 6, 2);
 
     await revertSnapshot(snapshot);
   });
 
-  test("newChannel channel already exists between nodes", async t => {
+  it("newChannel channel already exists between nodes", async () => {
     const snapshot = await takeSnapshot();
 
     const tx = await createChannel(instance, 6, 6, 2);
-    await t.shouldFail(createChannel(instance, 6, 6, 2));
+    await assertRevert(createChannel(instance, 6, 6, 2));
     const channelId = tx.logs[0].args._channelId;
 
     await updateState(instance, channelId, 1, 5, 7);
@@ -70,38 +78,32 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  test("newChannel bad sig", async t => {
+  it("newChannel bad sig", async () => {
     const snapshot = await takeSnapshot();
 
-    await instance.depositToAddress.sendTransaction(ACCT_0_ADDR, { value: 12 });
-    await instance.depositToAddress.sendTransaction(ACCT_1_ADDR, { value: 12 });
+    await instance.depositToAddress.sendTransaction(ACCT_A.address, { value: 12 });
+    await instance.depositToAddress.sendTransaction(ACCT_B.address, { value: 12 });
 
     const expiration = web3.eth.getBlock("latest").number + 5;
 
     const badFingerprint = solSha3(
       "newChannel derp",
       instance.contract.address,
-      ACCT_0_ADDR,
-      ACCT_1_ADDR,
+      ACCT_A.address,
+      ACCT_B.address,
       6,
       6,
       expiration,
       2
     );
 
-    const badSignature0 = sign(
-      badFingerprint,
-      new Buffer(ACCT_0_PRIVKEY, "hex")
-    );
-    const badSignature1 = sign(
-      badFingerprint,
-      new Buffer(ACCT_1_PRIVKEY, "hex")
-    );
+    const badSignature0 = sign(badFingerprint, ACCT_A);
+    const badSignature1 = sign(badFingerprint, ACCT_B);
 
-    await t.shouldFail(
+    await assertRevert(
       instance.newChannel(
-        ACCT_0_ADDR,
-        ACCT_1_ADDR,
+        ACCT_A.address,
+        ACCT_B.address,
         6,
         6,
         expiration,
@@ -114,20 +116,20 @@ module.exports = async (test, instance) => {
     const fingerprint = solSha3(
       "newChannel",
       instance.contract.address,
-      ACCT_0_ADDR,
-      ACCT_1_ADDR,
+      ACCT_A.address,
+      ACCT_B.address,
       6,
       6,
       expiration,
       2
     );
 
-    const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
-    const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
+    const signature0 = sign(fingerprint, ACCT_A);
+    const signature1 = sign(fingerprint, ACCT_B);
 
     await instance.newChannel(
-      ACCT_0_ADDR,
-      ACCT_1_ADDR,
+      ACCT_A.address,
+      ACCT_B.address,
       6,
       6,
       expiration,
@@ -139,19 +141,19 @@ module.exports = async (test, instance) => {
     await revertSnapshot(snapshot);
   });
 
-  test("newChannel bad amount", async t => {
+  it("newChannel bad amount", async () => {
     const snapshot = await takeSnapshot();
 
-    await t.shouldFail(createChannel(instance, 6, 130, 2));
+    await assertRevert(createChannel(instance, 6, 130, 2));
     await revertSnapshot(snapshot);
   });
 
-  test("newChannel already exists", async t => {
+  it("newChannel already exists", async () => {
     const snapshot = await takeSnapshot();
 
     await createChannel(instance, 6, 6, 2);
 
-    await t.shouldFail(createChannel(instance, 6, 6, 2));
+    await assertRevert(createChannel(instance, 6, 6, 2));
     await revertSnapshot(snapshot);
   });
-};
+});
