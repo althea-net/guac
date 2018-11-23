@@ -11,6 +11,7 @@
     "truffle": "^5.0.0-beta.1"
   },
   "devDependencies": {
+    "chai": "^4.2.0",
     "solmd": "^0.3.0",
     "eslint": "^4.1.1",
     "prettier": "^1.5.3"
