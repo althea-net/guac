@@ -12,7 +12,7 @@ const {
   provider,
 } = require("./utils.js");
 
-module.exports = context.only("Redraw", async () => {
+module.exports = context("Redraw", async () => {
 	let instance, snapshotId
 	before(async () => {
 		instance = await PaymentChannels.new()
