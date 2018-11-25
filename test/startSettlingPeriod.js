@@ -1,5 +1,5 @@
 const PaymentChannels = artifacts.require("PaymentChannels.sol")
-const { throwing, reverting } = require("./helpers/shouldFail.js")
+const {reverting } = require("./helpers/shouldFail.js")
 const {ACCT_A} = require("./constants.js");
 
 const {
@@ -12,7 +12,7 @@ const {
   startSettlingPeriod
 } = require("./utils.js");
 
-module.exports = context.only("Start settling period", async () => {
+module.exports = context("Start settling period", async () => {
 
   let instance, snapshotId
   before(async () => {

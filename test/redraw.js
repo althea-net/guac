@@ -1,6 +1,6 @@
 const PaymentChannels = artifacts.require("PaymentChannels.sol")
-const {reverting } = require("./helpers/shouldFail.js")
-const {ACCT_A, ACCT_B} = require("./constants.js");
+const {throwing, reverting } = require("./helpers/shouldFail.js")
+const {ACCT_A, ACCT_B, ZERO} = require("./constants.js");
 
 const {
   takeSnapshot,
@@ -9,9 +9,10 @@ const {
   createChannel,
   updateState,
 	finalAsserts,
+  provider,
 } = require("./utils.js");
 
-module.exports = context("Redraw", async () => {
+module.exports = context.only("Redraw", async () => {
 	let instance, snapshotId
 	before(async () => {
 		instance = await PaymentChannels.new()
@@ -28,8 +29,14 @@ module.exports = context("Redraw", async () => {
     // create channel with 6, 6 (both parties have 12 to start)
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
-    assert.equal((await instance.balanceOf.call(ACCT_A.address)).c[0], 6);
-    assert.equal((await instance.balanceOf.call(ACCT_B.address)).c[0], 6);
+    assert.equal((
+      await instance.balanceOf.call(ACCT_A.address)).toString(),
+      "6"
+    );
+    assert.equal(
+      (await instance.balanceOf.call(ACCT_B.address)).toString(),
+      "6"
+    );
 
     // update channel to 5, 7, then 5, 1,
 		// effectively withdrawing 6 for address1,
@@ -37,17 +44,23 @@ module.exports = context("Redraw", async () => {
     const redrawTx = await reDraw(instance, channelId, 1, 5, 7, 5, 1);
 
     assert.equal(redrawTx.logs[0].event, "ChannelReDrawn");
-    assert.equal((await instance.balanceOf.call(ACCT_A.address)).c[0], 6);
-    assert.equal((await instance.balanceOf.call(ACCT_B.address)).c[0], 12);
-	
-		finalAsserts({
-			instance,
-			channelId,
-			totalBalance: "6",
-			balance0: "5",
-			balance1: "1",
-			sequenceNumber: "1",
-		})
+    assert.equal((
+      await instance.balanceOf.call(ACCT_A.address)).toString(),
+      "6"
+    );
+    assert.equal(
+      (await instance.balanceOf.call(ACCT_B.address)).toString(),
+      "12"
+    );
+
+    await finalAsserts({
+      instance,
+      channelId,
+      totalBalance: "6",
+      balance0: "5",
+      balance1: "1",
+      sequenceNumber: "1",
+    })
   });
 
   it("reDraw oldBalance higher than total", async () => {
@@ -60,7 +73,7 @@ module.exports = context("Redraw", async () => {
   it("reDraw newBalance unaffordable", async () => {
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
-    await reverting(reDraw(instance, channelId, 1, 5, 7, 5, 100));
+    await throwing(reDraw(instance, channelId, 1, 5, 7, 5, 100));
     await reDraw(instance, channelId, 1, 5, 7, 5, 1);
   });
 
@@ -85,7 +98,7 @@ module.exports = context("Redraw", async () => {
         7,
         5,
         1,
-        web3.eth.getBlock("latest").number
+        await provider.getBlockNumber()
       )
     );
 
