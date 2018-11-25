@@ -155,13 +155,13 @@ async function startSettlingPeriod(instance, channelId) {
 
   const fingerprint = solSha3(
     ['string', 'address', 'bytes32',],
-    ["updateState", instance.address, channelId,]
+    ["startSettlingPeriod", instance.address, channelId,]
   )
 
   return instance.startSettlingPeriod(
     channelId,
     sign(fingerprint, ACCT_A)
-  );
+  )
 }
 
 async function closeChannel(instance, channelId, balance0 = 5, balance1 = 7) {
