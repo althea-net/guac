@@ -1,19 +1,8 @@
-// cook mango twist then skin sort option civil have still rather guilt
-
-const test = require("blue-tape");
-const p = require("util").promisify;
-
-const {
-  ACCT_0_PRIVKEY,
-  ACCT_0_ADDR,
-  ACCT_1_PRIVKEY,
-  ACCT_1_ADDR,
-  ACCT_2_PRIVKEY,
-  ACCT_2_ADDR
-} = require("./constants.js");
+const PaymentChannels = artifacts.require("PaymentChannels.sol")
+const { throwing, reverting } = require("./helpers/shouldFail.js")
+const {ACCT_A, ACCT_B, ACCT_C} = require("./constants.js");
 
 const {
-  filterLogs,
   takeSnapshot,
   revertSnapshot,
   solSha3,
@@ -21,47 +10,54 @@ const {
   mineBlocks,
   createChannel,
   updateState,
-  startSettlingPeriod
+  startSettlingPeriod,
+  finalAsserts,
+  provider,
 } = require("./utils.js");
 
-module.exports = async (test, instance) => {
-  test("updateState happy path", async t => {
-    const snapshot = await takeSnapshot();
+module.exports = context("Update State", async () => {
 
+  let instance, snapshotId
+  before(async () => {
+    instance = await PaymentChannels.new()
+  })
+
+  beforeEach(async () => {
+    snapshotId = await takeSnapshot()
+  })
+
+  afterEach(async () => {
+    await revertSnapshot(snapshotId)
+  })
+
+  it("updateState happy path", async () => {
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
+    await updateState(instance, channelId, 1, 5, 7);
+    await finalAsserts({
+      instance,
+      channelId,
+      balance0: "5",
+      balance1: "7",
+      sequenceNumber: "1",
+    })
+  })
+
+  it("updateState bad amount", async () => {
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
 
+    await reverting(updateState(instance, channelId, 1, 5, 50));
     await updateState(instance, channelId, 1, 5, 7);
-
-    t.deepEqual(
-      JSON.parse(JSON.stringify(await instance.channels(channelId))),
-      [ACCT_0_ADDR, ACCT_1_ADDR, "12", "5", "7", "1", "2", false, "0"]
-    );
-
-    await revertSnapshot(snapshot);
   });
 
-  test("updateState bad amount", async t => {
-    const snapshot = await takeSnapshot();
-
-    const tx = await createChannel(instance, 6, 6, 2);
-    const channelId = tx.logs[0].args._channelId;
-
-    await t.shouldFail(updateState(instance, channelId, 1, 5, 50));
-    await updateState(instance, channelId, 1, 5, 7);
-
-    await revertSnapshot(snapshot);
-  });
-
-  test("updateState nonexistant channel", async t => {
-    const snapshot = await takeSnapshot();
-
+  it("updateState nonexistant channel", async () => {
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
 
     await updateState(instance, channelId, 1, 5, 7);
 
-    await t.shouldFail(
+    await reverting(
       updateState(
         instance,
         "0x2000000000000000000000000000000000000000000000000000000000000000",
@@ -70,99 +66,77 @@ module.exports = async (test, instance) => {
         7
       )
     );
-
-    await revertSnapshot(snapshot);
   });
 
-  test("channel closed before updateState", async t => {
-    const snapshot = await takeSnapshot();
-
+  it("channel closed before updateState", async () => {
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
     await startSettlingPeriod(instance, channelId);
     await updateState(instance, channelId, 1, 5, 7);
     await mineBlocks(5);
 
-    await t.shouldFail(updateState(instance, channelId, 2, 5, 7));
-
-    await revertSnapshot(snapshot);
+    await reverting(updateState(instance, channelId, 2, 5, 7));
   });
 
-  test("updateState low seq #", async t => {
-    const snapshot = await takeSnapshot();
-
+  it("updateState low seq #", async () => {
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
     await updateState(instance, channelId, 3, 5, 7);
 
-    await t.shouldFail(updateState(instance, channelId, 2, 5, 7));
-
-    await revertSnapshot(snapshot);
+    await reverting(updateState(instance, channelId, 2, 5, 7));
   });
 
-  test("updateState bad fingerprint (string)", async t => {
-    const snapshot = await takeSnapshot();
-
+  it("updateState bad fingerprint (string)", async () => {
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
     await updateState(instance, channelId, 1, 5, 7);
 
     const fingerprint = solSha3(
       "updateState derp",
-      instance.contract.address,
+      instance.address,
       channelId,
       2,
       5,
       7
     );
 
-    const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
-    const signature1 = sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"));
+    const signature0 = sign(fingerprint, ACCT_A);
+    const signature1 = sign(fingerprint, ACCT_B);
 
-    await t.shouldFail(
+    await reverting(
       instance.updateState(channelId, 2, 5, 7, signature0, signature1)
     );
-
-    await revertSnapshot(snapshot);
   });
 
-  test("updateState wrong private key", async t => {
-    const snapshot = await takeSnapshot();
-
+  it("updateState wrong private key", async () => {
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
 
     const fingerprint = solSha3(
       "updateState",
-      instance.contract.address,
+      instance.address,
       channelId,
       1,
       5,
       7
     );
 
-    const signature0 = sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"));
-    const signature1 = sign(fingerprint, new Buffer(ACCT_2_PRIVKEY, "hex"));
+    const signature0 = sign(fingerprint, ACCT_A);
+    const signature1 = sign(fingerprint, ACCT_C);
 
-    await t.shouldFail(
+    await reverting(
       instance.updateState(channelId, 1, 5, 7, signature0, signature1)
     );
-
-    await revertSnapshot(snapshot);
   });
 
-  test("updateStateWithBounty happy path", async t => {
-    const snapshot = await takeSnapshot();
-
+  it("updateStateWithBounty happy path", async () => {
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
-
     await updateState(instance, channelId, 1, 5, 7);
-
     const settlingTx = await startSettlingPeriod(instance, channelId);
 
-    t.equal(settlingTx.logs[0].event, "SettlingStarted");
-    t.equal(settlingTx.logs[0].args["_sequenceNumber"].toString(), "1");
+    assert.equal(settlingTx.logs[0].event, "SettlingStarted");
+    assert.equal(settlingTx.logs[0].args["_sequenceNumber"].toString(), "1");
 
     const sequenceNumber = 2;
     const balance0 = 4;
@@ -170,25 +144,19 @@ module.exports = async (test, instance) => {
 
     const updateStateFingerprint = solSha3(
       "updateState",
-      instance.contract.address,
+      instance.address,
       channelId,
       sequenceNumber,
       balance0,
       balance1
     );
 
-    const signature0 = sign(
-      updateStateFingerprint,
-      new Buffer(ACCT_0_PRIVKEY, "hex")
-    );
-    const signature1 = sign(
-      updateStateFingerprint,
-      new Buffer(ACCT_1_PRIVKEY, "hex")
-    );
+    const signature0 = sign(updateStateFingerprint, ACCT_A);
+    const signature1 = sign(updateStateFingerprint, ACCT_B);
 
     const bountyFingerprint = solSha3(
       "updateStateWithBounty",
-      instance.contract.address,
+      instance.address,
       channelId,
       sequenceNumber,
       balance0,
@@ -198,10 +166,7 @@ module.exports = async (test, instance) => {
       2
     );
 
-    const bountySignature = sign(
-      bountyFingerprint,
-      new Buffer(ACCT_0_PRIVKEY, "hex")
-    );
+    const bountySignature = sign(bountyFingerprint, ACCT_A);
 
     await instance.updateStateWithBounty(
       channelId,
@@ -212,33 +177,26 @@ module.exports = async (test, instance) => {
       signature1,
       2,
       bountySignature,
-      { from: ACCT_2_ADDR }
+      { from: ACCT_C.address }
     );
 
-    t.equal((await instance.balanceOf.call(ACCT_2_ADDR)).toString(), "2");
-
-    const channel = JSON.parse(
-      JSON.stringify(await instance.channels(channelId))
+    assert.equal(
+      (await instance.balanceOf.call(ACCT_C.address)).toString(),
+      "2"
     );
-
-    t.deepEqual(channel, [
-      ACCT_0_ADDR,
-      ACCT_1_ADDR,
-      "12",
-      "4",
-      "8",
-      "2",
-      "2",
-      true,
-      channel[8]
-    ]);
-
-    await revertSnapshot(snapshot);
+    
+    await finalAsserts({
+      instance,
+      channelId,
+      balance0: "4",
+      balance1: "8",
+      sequenceNumber: "2",
+      settlingPeriodEnd: (await provider.getBlockNumber() + 1).toString(),
+      settlingPeriodStarted: true,
+    });
   });
 
-  test("updateStateWithBounty settlingPeriod not started", async t => {
-    const snapshot = await takeSnapshot();
-
+  it("updateStateWithBounty settlingPeriod not started", async () => {
     const sequenceNumber = 1;
 
     const balance0 = 5;
@@ -249,7 +207,7 @@ module.exports = async (test, instance) => {
 
     const updateStateFingerprint = solSha3(
       "updateState",
-      instance.contract.address,
+      instance.address,
       channelId,
       sequenceNumber,
       balance0,
@@ -258,16 +216,16 @@ module.exports = async (test, instance) => {
 
     const signature0 = sign(
       updateStateFingerprint,
-      new Buffer(ACCT_0_PRIVKEY, "hex")
+      ACCT_A
     );
     const signature1 = sign(
       updateStateFingerprint,
-      new Buffer(ACCT_1_PRIVKEY, "hex")
+      ACCT_B
     );
 
     const bountyFingerprint = solSha3(
       "updateStateWithBounty",
-      instance.contract.address,
+      instance.address,
       channelId,
       sequenceNumber,
       balance0,
@@ -277,12 +235,9 @@ module.exports = async (test, instance) => {
       2
     );
 
-    const bountySignature = sign(
-      bountyFingerprint,
-      new Buffer(ACCT_0_PRIVKEY, "hex")
-    );
+    const bountySignature = sign(bountyFingerprint, ACCT_A);
 
-    await t.shouldFail(
+    await reverting(
       instance.updateStateWithBounty(
         channelId,
         sequenceNumber,
@@ -292,7 +247,7 @@ module.exports = async (test, instance) => {
         signature1,
         2,
         bountySignature,
-        { from: ACCT_2_ADDR }
+        { from: ACCT_B.address }
       )
     );
 
@@ -307,15 +262,11 @@ module.exports = async (test, instance) => {
       signature1,
       2,
       bountySignature,
-      { from: ACCT_2_ADDR }
+      { from: ACCT_B.address}
     );
-
-    await revertSnapshot(snapshot);
   });
 
-  test("updateStateWithBounty bad sig", async t => {
-    const snapshot = await takeSnapshot();
-
+  it("updateStateWithBounty bad sig", async () => {
     const sequenceNumber = 1;
 
     const balance0 = 5;
@@ -334,18 +285,12 @@ module.exports = async (test, instance) => {
       balance1
     );
 
-    const signature0 = sign(
-      updateStateFingerprint,
-      new Buffer(ACCT_0_PRIVKEY, "hex")
-    );
-    const signature1 = sign(
-      updateStateFingerprint,
-      new Buffer(ACCT_1_PRIVKEY, "hex")
-    );
+    const signature0 = sign(updateStateFingerprint, ACCT_A);
+    const signature1 = sign(updateStateFingerprint, ACCT_B);
 
     const bountyFingerprint = solSha3(
       "updateStateWithBounty",
-      instance.contract.address,
+      instance.address,
       channelId,
       sequenceNumber,
       balance0,
@@ -355,14 +300,11 @@ module.exports = async (test, instance) => {
       2
     );
 
-    const bountySignature = sign(
-      bountyFingerprint,
-      new Buffer(ACCT_0_PRIVKEY, "hex")
-    );
+    const bountySignature = sign(bountyFingerprint, ACCT_A);
 
     const badBountyFingerprint = solSha3(
       "updateStateWithBounty derp",
-      instance.contract.address,
+      instance.address,
       channelId,
       sequenceNumber,
       balance0,
@@ -372,12 +314,9 @@ module.exports = async (test, instance) => {
       2
     );
 
-    const badBountySignature = sign(
-      badBountyFingerprint,
-      new Buffer(ACCT_0_PRIVKEY, "hex")
-    );
+    const badBountySignature = sign(badBountyFingerprint, ACCT_A);
 
-    await t.shouldFail(
+    await throwing(
       instance.updateStateWithBounty(
         channelId,
         sequenceNumber,
@@ -387,22 +326,22 @@ module.exports = async (test, instance) => {
         signature1,
         2,
         badBountySignature,
-        { from: ACCT_2_ADDR }
+        { from: ACCT_C.address }
       )
     );
 
-    // await instance.updateStateWithBounty(
-    //   channelId,
-    //   sequenceNumber,
-    //   balance0,
-    //   balance1,
-    //   signature0,
-    //   signature1,
-    //   2,
-    //   bountySignature,
-    //   { from: ACCT_2_ADDR }
-    // );
-
-    await revertSnapshot(snapshot);
+    /*
+    await instance.updateStateWithBounty(
+      channelId,
+      sequenceNumber,
+      balance0,
+      balance1,
+      signature0,
+      signature1,
+      2,
+      bountySignature,
+      { from: ACCT_C.address }
+    );
+    */
   });
-};
+})

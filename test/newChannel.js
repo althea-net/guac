@@ -15,7 +15,7 @@ const {
   finalAsserts
 } = require("./utils.js");
 
-module.exports = context.only("New Channel", () => {
+module.exports = context("New Channel", () => {
 
   let instance, snapshotId
   before(async () => {
