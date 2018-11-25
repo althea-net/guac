@@ -15,7 +15,7 @@ const {
   finalAsserts
 } = require("./utils.js");
 
-module.exports = context("New Channel", () => {
+module.exports = context.only("New Channel", () => {
 
   let instance, snapshotId
   before(async () => {
@@ -30,7 +30,7 @@ module.exports = context("New Channel", () => {
     await revertSnapshot(snapshotId)
   })
 
-  it.only("newChannel happy path", async () => {
+  it("newChannel happy path", async () => {
     const tx = await createChannel(instance, 6, 6, 2);
     assert.equal(tx.logs[0].event, "ChannelOpened");
     const channelId = tx.logs[0].args._channelId;
@@ -64,25 +64,14 @@ module.exports = context("New Channel", () => {
     const expiration = await provider.getBlockNumber() + 5;
 
     const badFingerprint = solSha3(
-      [
-        'string',
-        'address',
-        'address',
-        'address',
-        'uint256',
-        'uint256',
-        'uint256',
-        'uint256',
-      ],[
-        "newChannel derp",
-        instance.address,
-        ACCT_A.address,
-        ACCT_B.address,
-        6,
-        6,
-        expiration,
-        2
-      ]
+      "newChannel derp",
+      instance.address,
+      ACCT_A.address,
+      ACCT_B.address,
+      6,
+      6,
+      expiration,
+      2
     )
 
     const badSignature0 = sign(badFingerprint, ACCT_A);
@@ -102,25 +91,14 @@ module.exports = context("New Channel", () => {
     );
 
     const fingerprint = solSha3(
-      [
-        'string',
-        'address',
-        'address',
-        'address',
-        'uint256',
-        'uint256',
-        'uint256',
-        'uint256',
-      ],[
-        "newChannel",
-        instance.address,
-        ACCT_A.address,
-        ACCT_B.address,
-        6,
-        6,
-        expiration,
-        2
-      ]
+      "newChannel",
+      instance.address,
+      ACCT_A.address,
+      ACCT_B.address,
+      6,
+      6,
+      expiration,
+      2
     )
 
     const signature0 = sign(fingerprint, ACCT_A);
