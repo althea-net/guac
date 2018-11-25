@@ -70,11 +70,11 @@ async function createChannel(
   balance1,
   settlingPeriod,
   string = "newChannel",
-  expiration = null
+  expiration = false
 ) {
 
   if(!expiration) {
-    expiration = (await web3.eth.getBlock("latest")).number + 5
+    expiration = await provider.getBlockNumber() + 5
   }
   await instance.depositToAddress(ACCT_A.address, { value: 12 });
   await instance.depositToAddress(ACCT_B.address, { value: 12 });
@@ -163,9 +163,12 @@ async function reDraw(
   oldBalance1,
   newBalance0,
   newBalance1,
-  expiration = web3.eth.getBlock("latest").number + 5
+  expiration = false
 ) {
 
+  if(!expiration) {
+    expiration = await provider.getBlockNumber() + 5
+  }
   const fingerprint = solSha3(
     "reDraw",
     instance.address,
