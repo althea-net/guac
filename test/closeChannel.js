@@ -1,17 +1,8 @@
-// cook mango twist then skin sort option civil have still rather guilt
-
-const test = require("blue-tape");
-const p = require("util").promisify;
-
-const {
-  ACCT_0_PRIVKEY,
-  ACCT_0_ADDR,
-  ACCT_1_PRIVKEY,
-  ACCT_1_ADDR
-} = require("./constants.js");
+const PaymentChannels = artifacts.require("PaymentChannels.sol")
+const { throwing, reverting } = require("./helpers/shouldFail.js")
+const {ACCT_A, ACCT_B} = require("./constants.js");
 
 const {
-  filterLogs,
   takeSnapshot,
   revertSnapshot,
   solSha3,
@@ -20,14 +11,26 @@ const {
   createChannel,
   updateState,
   startSettlingPeriod,
-  toSolUint256,
-  toSolInt256,
   closeChannel
 } = require("./utils.js");
 
-module.exports = async (test, instance) => {
-  test("closeChannel happy path", async t => {
-    const snapshot = await takeSnapshot();
+module.exports = context("Close Channel", () => {
+
+  let instance, snapshotId
+  before(async () => {
+    instance = await PaymentChannels.new()
+  })
+
+  beforeEach(async () => {
+    snapshotId = await takeSnapshot()
+  })
+
+  afterEach(async () => {
+    await revertSnapshot(snapshotId)
+  })
+
+
+  it("closeChannel happy path", async () => {
 
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
@@ -38,14 +41,17 @@ module.exports = async (test, instance) => {
 
     await instance.closeChannel(channelId);
 
-    t.equal((await instance.balanceOf.call(ACCT_0_ADDR)).toString(), "11");
-    t.equal((await instance.balanceOf.call(ACCT_1_ADDR)).toString(), "13");
-
-    await revertSnapshot(snapshot);
+    assert.equal(
+      (await instance.balanceOf.call(ACCT_A.address)).toString(),
+      "11"
+    );
+    assert.equal(
+      (await instance.balanceOf.call(ACCT_B.address)).toString(),
+      "13"
+    );
   });
 
-  test("channel does not exist", async t => {
-    const snapshot = await takeSnapshot();
+  it("channel does not exist", async () => {
     const channelIdFake =
       "0x2000000000000000000000000000000000000000000000000000000000000000";
 
@@ -56,50 +62,29 @@ module.exports = async (test, instance) => {
     await startSettlingPeriod(instance, channelId);
     await mineBlocks(5);
 
-    await t.shouldFail(instance.closeChannel(channelIdFake));
+    await reverting(instance.closeChannel(channelIdFake));
 
     await instance.closeChannel(channelId);
 
-    await revertSnapshot(snapshot);
   });
 
-  test("channel is not settled", async t => {
-    const snapshot = await takeSnapshot();
+  it("channel is not settled", async () => {
 
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
 
     await updateState(instance, channelId, 1, 5, 7);
 
-    await t.shouldFail(instance.closeChannel(channelId));
+    await reverting(instance.closeChannel(channelId));
 
     await startSettlingPeriod(instance, channelId);
     await mineBlocks(5);
 
     await instance.closeChannel(channelId);
 
-    await revertSnapshot(snapshot);
   });
 
-  test("channel is already closed", async t => {
-    const snapshot = await takeSnapshot();
-
-    const tx = await createChannel(instance, 6, 6, 2);
-    const channelId = tx.logs[0].args._channelId;
-
-    await updateState(instance, channelId, 1, 5, 7);
-    await startSettlingPeriod(instance, channelId);
-    await mineBlocks(5);
-
-    await instance.closeChannel(channelId);
-
-    await t.shouldFail(instance.closeChannel(channelId));
-
-    await revertSnapshot(snapshot);
-  });
-
-  test("update after close", async t => {
-    const snapshot = await takeSnapshot();
+  it("channel is already closed", async () => {
 
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
@@ -110,20 +95,33 @@ module.exports = async (test, instance) => {
 
     await instance.closeChannel(channelId);
 
-    await t.shouldFail(updateState(instance, channelId, 1, 5, 7));
+    await reverting(instance.closeChannel(channelId));
 
-    await revertSnapshot(snapshot);
   });
 
-  test("closeChannelFast happy path", async t => {
-    const snapshot = await takeSnapshot();
+  it("update after close", async () => {
+
+    const tx = await createChannel(instance, 6, 6, 2);
+    const channelId = tx.logs[0].args._channelId;
+
+    await updateState(instance, channelId, 1, 5, 7);
+    await startSettlingPeriod(instance, channelId);
+    await mineBlocks(5);
+
+    await instance.closeChannel(channelId);
+
+    await reverting(updateState(instance, channelId, 1, 5, 7));
+
+  });
+
+  it("closeChannelFast happy path", async () => {
 
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
 
     const fingerprint = solSha3(
       "closeChannelFast",
-      instance.contract.address,
+      instance.address,
       channelId,
       1,
       5,
@@ -135,90 +133,84 @@ module.exports = async (test, instance) => {
       1,
       5,
       7,
-      sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex")),
-      sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"))
+      sign(fingerprint, ACCT_A),
+      sign(fingerprint, ACCT_B)
     );
 
-    t.equal((await instance.balanceOf.call(ACCT_0_ADDR)).toString(), "11");
-    t.equal((await instance.balanceOf.call(ACCT_1_ADDR)).toString(), "13");
+    assert.equal((await instance.balanceOf.call(ACCT_A.address)).toString(), "11");
+    assert.equal((await instance.balanceOf.call(ACCT_B.address)).toString(), "13");
 
-    await revertSnapshot(snapshot);
   });
 
-  test("closeChannelFast nonexistant channel", async t => {
+  it("closeChannelFast nonexistant channel", async () => {
     const fingerprint = solSha3(
       "closeChannelFast",
-      instance.contract.address,
+      instance.address,
       "0x2000000000000000000000000000000000000000000000000000000000000000"
     );
 
-    await t.shouldFail(
+    await reverting(
       instance.closeChannelFast(
         "0x2000000000000000000000000000000000000000000000000000000000000000",
         1,
         5,
         7,
-        sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex")),
-        sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"))
+        sign(fingerprint, ACCT_A),
+        sign(fingerprint, ACCT_B)
       )
     );
   });
 
-  test("closeChannelFast bad sig", async t => {
-    const snapshot = await takeSnapshot();
+  it("closeChannelFast bad sig", async () => {
 
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
 
     const fingerprint = solSha3(
       "closeChannelFast derp",
-      instance.contract.address,
+      instance.address,
       channelId,
       1,
       5,
       7
     );
 
-    await t.shouldFail(
+    await reverting(
       instance.closeChannelFast(
         channelId,
         1,
         5,
         7,
-        sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex")),
-        sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"))
+        sign(fingerprint, ACCT_A),
+        sign(fingerprint, ACCT_B)
       )
     );
 
-    await revertSnapshot(snapshot);
   });
 
-  test("closeChannelFast bad amount", async t => {
-    const snapshot = await takeSnapshot();
+  it("closeChannelFast bad amount", async () => {
 
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
 
     const fingerprint = solSha3(
       "closeChannelFast",
-      instance.contract.address,
+      instance.address,
       channelId,
       1,
       500,
       7
     );
 
-    await t.shouldFail(
+    await reverting(
       instance.closeChannelFast(
         channelId,
         1,
         500,
         7,
-        sign(fingerprint, new Buffer(ACCT_0_PRIVKEY, "hex")),
-        sign(fingerprint, new Buffer(ACCT_1_PRIVKEY, "hex"))
+        sign(fingerprint, ACCT_A),
+        sign(fingerprint, ACCT_B)
       )
     );
-
-    await revertSnapshot(snapshot);
-  });
-};
+  })
+})
