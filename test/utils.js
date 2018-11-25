@@ -1,5 +1,5 @@
 const { joinSignature } = require("ethers").utils
-const {ethers, utils} = require("ethers")
+const {ethers} = require("ethers")
 
 const {
   ACCT_A,
@@ -7,7 +7,7 @@ const {
 } = require("./constants.js");
 
 const provider = new ethers.providers.Web3Provider(web3.currentProvider);
-const solSha3 = utils.solidityKeccak256
+const solSha3 = web3.utils.soliditySha3
 
 module.exports = {
   provider,
@@ -80,26 +80,14 @@ async function createChannel(
   await instance.depositToAddress(ACCT_B.address, { value: 12 });
 
   const fingerprint = solSha3(
-    [
-      'string',
-      'address',
-      'address',
-      'address',
-      'uint256',
-      'uint256',
-      'uint256',
-      'uint256',
-    ],
-    [
-      string,
-      instance.address,
-      ACCT_A.address,
-      ACCT_B.address,
-      balance0,
-      balance1,
-      expiration,
-      settlingPeriod
-    ]
+    string,
+    instance.address,
+    ACCT_A.address,
+    ACCT_B.address,
+    balance0,
+    balance1,
+    expiration,
+    settlingPeriod
   );
 
   const signature0 = sign(fingerprint, ACCT_A);
@@ -126,17 +114,12 @@ async function updateState(
 ) {
 
   const fingerprint = solSha3(
-    [
-      'string', 'address', 'bytes32', 'uint256', 'uint256', 'uint256',
-    ],
-    [
-      "updateState",
-      instance.address,
-      channelId,
-      sequenceNumber,
-      balance0,
-      balance1
-    ]
+    "updateState",
+    instance.address,
+    channelId,
+    sequenceNumber,
+    balance0,
+    balance1
   )
 
   const signature0 = sign(fingerprint, ACCT_A);
@@ -155,8 +138,7 @@ async function updateState(
 async function startSettlingPeriod(instance, channelId) {
 
   const fingerprint = solSha3(
-    ['string', 'address', 'bytes32',],
-    ["startSettlingPeriod", instance.address, channelId,]
+    "startSettlingPeriod", instance.address, channelId
   )
 
   return instance.startSettlingPeriod(
@@ -185,28 +167,15 @@ async function reDraw(
 ) {
 
   const fingerprint = solSha3(
-    [
-      'string',
-      'address',
-      'bytes32',
-      'uint256',
-      'uint256',
-      'uint256',
-      'uint256',
-      'uint256',
-      'uint256',
-    ],
-    [
-      "reDraw",
-      instance.address,
-      channelId,
-      sequenceNumber,
-      oldBalance0,
-      oldBalance1,
-      newBalance0,
-      newBalance1,
-      expiration
-    ]
+    "reDraw",
+    instance.address,
+    channelId,
+    sequenceNumber,
+    oldBalance0,
+    oldBalance1,
+    newBalance0,
+    newBalance1,
+    expiration
   )
 
   const signature0 = sign(fingerprint, ACCT_A);
