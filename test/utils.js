@@ -1,15 +1,16 @@
-const p = require("util").promisify;
 const { joinSignature } = require("ethers").utils
-
-const solSha3 = web3.utils.soliditySha3
+const {ethers, utils} = require("ethers")
 
 const {
   ACCT_A,
   ACCT_B,
-  ACCT_C,
 } = require("./constants.js");
 
+const provider = new ethers.providers.Web3Provider(web3.currentProvider);
+const solSha3 = utils.solidityKeccak256
+
 module.exports = {
+  provider,
   sleep,
   takeSnapshot,
   revertSnapshot,
@@ -30,34 +31,19 @@ function sleep(time) {
   });
 }
 
-let snapshotInc = 0;
-
 async function takeSnapshot() {
-  //eslint-disable-next-line
-  const {error, result} = await p(web3.currentProvider.send)({
-    jsonrpc: "2.0",
-    method: "evm_snapshot",
-    id: snapshotInc++
-  })
-  return result
+  return await provider.send(`evm_snapshot`)
 }
 
 async function revertSnapshot(snapshotId) {
-  await p(web3.currentProvider.send)({
-    jsonrpc: "2.0",
-    method: "evm_revert",
-    params: [snapshotId],
-    id: snapshotInc++
-  })
+  await provider.send(
+    "evm_revert",
+    [snapshotId]
+  )
 }
 
-
 async function mineBlock() {
-  await p(web3.currentProvider.sendAsync.bind(web3.currentProvider))({
-    jsonrpc: "2.0",
-    method: "evm_mine",
-    id: new Date().getTime()
-  });
+  await provider.send("evm_mine")
 }
 
 async function mineBlocks(count) {
@@ -93,14 +79,26 @@ async function createChannel(
   await instance.depositToAddress(ACCT_B.address, { value: 12 });
 
   const fingerprint = solSha3(
-    string,
-    instance.address,
-    ACCT_A.address,
-    ACCT_B.address,
-    balance0,
-    balance1,
-    expiration,
-    settlingPeriod
+    [
+      'string',
+      'address',
+      'address',
+      'address',
+      'uint256',
+      'uint256',
+      'uint256',
+      'uint256',
+    ],
+    [
+      string,
+      instance.address,
+      ACCT_A.address,
+      ACCT_B.address,
+      balance0,
+      balance1,
+      expiration,
+      settlingPeriod
+    ]
   );
 
   const signature0 = sign(fingerprint, ACCT_A);
@@ -125,14 +123,20 @@ async function updateState(
   balance0,
   balance1
 ) {
+
   const fingerprint = solSha3(
-    "updateState",
-    instance.address,
-    channelId,
-    sequenceNumber,
-    balance0,
-    balance1
-  );
+    [
+      'string', 'address', 'bytes32', 'uint256', 'uint256', 'uint256',
+    ],
+    [
+      "updateState",
+      instance.address,
+      channelId,
+      sequenceNumber,
+      balance0,
+      balance1
+    ]
+  )
 
   const signature0 = sign(fingerprint, ACCT_A);
   const signature1 = sign(fingerprint, ACCT_B);
@@ -148,15 +152,15 @@ async function updateState(
 }
 
 async function startSettlingPeriod(instance, channelId) {
-  const startSettlingPeriodFingerprint = solSha3(
-    "startSettlingPeriod",
-    instance.address,
-    channelId
-  );
+
+  const fingerprint = solSha3(
+    ['string', 'address', 'bytes32',],
+    ["updateState", instance.address, channelId,]
+  )
 
   return instance.startSettlingPeriod(
     channelId,
-    sign(startSettlingPeriodFingerprint, ACCT_A)
+    sign(fingerprint, ACCT_A)
   );
 }
 
@@ -178,17 +182,31 @@ async function reDraw(
   newBalance1,
   expiration = web3.eth.getBlock("latest").number + 5
 ) {
+
   const fingerprint = solSha3(
-    "reDraw",
-    instance.address,
-    channelId,
-    sequenceNumber,
-    oldBalance0,
-    oldBalance1,
-    newBalance0,
-    newBalance1,
-    expiration
-  );
+    [
+      'string',
+      'address',
+      'bytes32',
+      'uint256',
+      'uint256',
+      'uint256',
+      'uint256',
+      'uint256',
+      'uint256',
+    ],
+    [
+      "reDraw",
+      instance.address,
+      channelId,
+      sequenceNumber,
+      oldBalance0,
+      oldBalance1,
+      newBalance0,
+      newBalance1,
+      expiration
+    ]
+  )
 
   const signature0 = sign(fingerprint, ACCT_A);
   const signature1 = sign(fingerprint, ACCT_B);
