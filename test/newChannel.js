@@ -12,13 +12,14 @@ const {
   sign,
   revertSnapshot,
   takeSnapshot,
+  finalAsserts
 } = require("./utils.js");
 
-module.exports = contract("PaymentChannels::newChannel", () => {
+module.exports = context("New Channel", () => {
 
   let instance, snapshotId
   before(async () => {
-    instance = await PaymentChannels.deployed()
+    instance = await PaymentChannels.new()
   })
 
   beforeEach(async () => {
@@ -29,31 +30,13 @@ module.exports = contract("PaymentChannels::newChannel", () => {
     await revertSnapshot(snapshotId)
   })
 
-  it("newChannel happy path", async () => {
+  it.only("newChannel happy path", async () => {
     const tx = await createChannel(instance, 6, 6, 2);
     assert.equal(tx.logs[0].event, "ChannelOpened");
     const channelId = tx.logs[0].args._channelId;
-
     assert.equal((await instance.balanceOf(ACCT_A.address)).toNumber(), 6);
     assert.equal((await instance.balanceOf(ACCT_B.address)).toNumber(), 6);
-
-    // This for loop is to remove the extra values of the channels
-    // call. New web3v1 returns a JSON object so this just prepares
-    // the extra values.
-    let channel = await instance.channels(channelId)
-    let compare = []
-    for(var i = 0; i < (Object.keys(channel).length)/2; i++) {
-      // web3 1 returns BN so just converting to string
-      if(web3.utils.isBN(channel[i])) {
-        channel[i] = channel[i].toString()
-      }
-      compare.push(channel[i])
-    }
-
-    assert.deepEqual(
-      compare,
-      [ACCT_A.address, ACCT_B.address, "12", "6", "6", "0", "2", false, "0"]
-    )
+    await finalAsserts({instance, channelId})
   })
 
   it("newChannel expired", async () => {

@@ -22,7 +22,8 @@ module.exports = {
   updateState,
   startSettlingPeriod,
   closeChannel,
-  reDraw
+  reDraw,
+  finalAsserts
 };
 
 function sleep(time) {
@@ -222,4 +223,51 @@ async function reDraw(
     signature0,
     signature1
   );
+}
+
+async function finalAsserts(
+  {
+    instance,
+    channelId,
+    addres0 = ACCT_A.address,
+    addres1 = ACCT_B.address,
+    totalBalance = "12",
+    balance0 = "6",
+    balance1 = "6",
+    sequenceNumber = "0",
+    settlingPeriodLength = "2",
+    settlingPeriodStarted = false,
+    settlingPeriodEnd = "0"
+  }
+) {
+  let values = await instance.channels(channelId)
+  assert.equal(addres0, values.address0, "Address 0 not equal")
+  assert.equal(addres1, values.address1, "Address 1 not equal")
+  assert.equal(
+    totalBalance,
+    values.totalBalance.toString(),
+    "Total balance not equal"
+  )
+  assert.equal(balance0, values.balance0.toString(), "Balance 0 not equal")
+  assert.equal(balance1, values.balance1.toString(), "Balance 1 not equal")
+  assert.equal(
+    sequenceNumber,
+    values.sequenceNumber.toString(),
+    "Sequence number not equal"
+  )
+  assert.equal(
+    settlingPeriodLength,
+    values.settlingPeriodLength.toString(),
+    "Settling period length not equal"
+  )
+  assert.equal(
+    settlingPeriodStarted,
+    values.settlingPeriodStarted,
+    "Settling period started not equal"
+  )
+  assert.equal(
+    settlingPeriodEnd,
+    values.settlingPeriodEnd.toString(),
+    "Settling period end not equal"
+  )
 }
