@@ -12,7 +12,6 @@ addons:
       - build-essential
 
 install:
-  - docker pull ethereum/solc:0.4.24
   - yarn install
 
 script:
