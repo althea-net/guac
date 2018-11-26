@@ -1,0 +1,463 @@
+[
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdraw",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "sig",
+        "type": "bytes"
+      },
+      {
+        "name": "signer",
+        "type": "address"
+      }
+    ],
+    "name": "ecverify",
+    "outputs": [
+      {
+        "name": "b",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "quickDeposit",
+    "outputs": [],
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "address"
+      }
+    ],
+    "name": "depositToAddress",
+    "outputs": [],
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "name": "balance",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "sig",
+        "type": "bytes"
+      }
+    ],
+    "name": "ecrecovery",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "channels",
+    "outputs": [
+      {
+        "name": "address0",
+        "type": "address"
+      },
+      {
+        "name": "address1",
+        "type": "address"
+      },
+      {
+        "name": "totalBalance",
+        "type": "uint256"
+      },
+      {
+        "name": "balance0",
+        "type": "uint256"
+      },
+      {
+        "name": "balance1",
+        "type": "uint256"
+      },
+      {
+        "name": "sequenceNumber",
+        "type": "uint256"
+      },
+      {
+        "name": "settlingPeriodLength",
+        "type": "uint256"
+      },
+      {
+        "name": "settlingPeriodStarted",
+        "type": "bool"
+      },
+      {
+        "name": "settlingPeriodEnd",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "address"
+      },
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "channelBetweenPairs",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "address0",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "address1",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "_channelId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ChannelOpened",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "_channelId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "_sequenceNumber",
+        "type": "uint256"
+      }
+    ],
+    "name": "SettlingStarted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "_channelId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ChannelReDrawn",
+    "type": "event"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_address0",
+        "type": "address"
+      },
+      {
+        "name": "_address1",
+        "type": "address"
+      },
+      {
+        "name": "_balance0",
+        "type": "uint256"
+      },
+      {
+        "name": "_balance1",
+        "type": "uint256"
+      },
+      {
+        "name": "_expiration",
+        "type": "uint256"
+      },
+      {
+        "name": "_settlingPeriodLength",
+        "type": "uint256"
+      },
+      {
+        "name": "_signature0",
+        "type": "bytes"
+      },
+      {
+        "name": "_signature1",
+        "type": "bytes"
+      }
+    ],
+    "name": "newChannel",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_channelId",
+        "type": "bytes32"
+      },
+      {
+        "name": "_sequenceNumber",
+        "type": "uint256"
+      },
+      {
+        "name": "_balance0",
+        "type": "uint256"
+      },
+      {
+        "name": "_balance1",
+        "type": "uint256"
+      },
+      {
+        "name": "_signature0",
+        "type": "bytes"
+      },
+      {
+        "name": "_signature1",
+        "type": "bytes"
+      }
+    ],
+    "name": "updateState",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_channelId",
+        "type": "bytes32"
+      },
+      {
+        "name": "_sequenceNumber",
+        "type": "uint256"
+      },
+      {
+        "name": "_balance0",
+        "type": "uint256"
+      },
+      {
+        "name": "_balance1",
+        "type": "uint256"
+      },
+      {
+        "name": "_signature0",
+        "type": "bytes"
+      },
+      {
+        "name": "_signature1",
+        "type": "bytes"
+      },
+      {
+        "name": "_bountyAmount",
+        "type": "uint256"
+      },
+      {
+        "name": "_bountySignature",
+        "type": "bytes"
+      }
+    ],
+    "name": "updateStateWithBounty",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_channelId",
+        "type": "bytes32"
+      },
+      {
+        "name": "_sequenceNumber",
+        "type": "uint256"
+      },
+      {
+        "name": "_balance0",
+        "type": "uint256"
+      },
+      {
+        "name": "_balance1",
+        "type": "uint256"
+      },
+      {
+        "name": "_signature0",
+        "type": "bytes"
+      },
+      {
+        "name": "_signature1",
+        "type": "bytes"
+      }
+    ],
+    "name": "closeChannelFast",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_channelId",
+        "type": "bytes32"
+      },
+      {
+        "name": "_signature",
+        "type": "bytes"
+      }
+    ],
+    "name": "startSettlingPeriod",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_channelId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "closeChannel",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_channelId",
+        "type": "bytes32"
+      },
+      {
+        "name": "_sequenceNumber",
+        "type": "uint256"
+      },
+      {
+        "name": "_oldBalance0",
+        "type": "uint256"
+      },
+      {
+        "name": "_oldBalance1",
+        "type": "uint256"
+      },
+      {
+        "name": "_newBalance0",
+        "type": "uint256"
+      },
+      {
+        "name": "_newBalance1",
+        "type": "uint256"
+      },
+      {
+        "name": "_expiration",
+        "type": "uint256"
+      },
+      {
+        "name": "_signature0",
+        "type": "bytes"
+      },
+      {
+        "name": "_signature1",
+        "type": "bytes"
+      }
+    ],
+    "name": "reDraw",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
