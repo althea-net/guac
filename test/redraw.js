@@ -39,7 +39,7 @@ module.exports = context("Redraw", async () => {
     );
 
     // update channel to 5, 7, then 5, 1,
-		// effectively withdrawing 6 for address1,
+    // effectively withdrawing 6 for address1,
     // bringing address1's balance to 12
     const redrawTx = await reDraw(instance, channelId, 1, 5, 7, 5, 1);
 
