@@ -44,8 +44,8 @@ module.exports = context("Redraw", async () => {
     const redrawTx = await reDraw(instance, channelId, 1, 5, 7, 5, 1);
 
     assert.equal(redrawTx.logs[0].event, "ChannelReDrawn");
-    assert.equal((
-      await instance.balanceOf.call(ACCT_A.address)).toString(),
+    assert.equal(
+      (await instance.balanceOf.call(ACCT_A.address)).toString(),
       "6"
     );
     assert.equal(
