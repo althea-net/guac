@@ -3,12 +3,18 @@
 This repo contains the payment channel contracts of Althea.
 
 
-### Running tests
+### Setup
 
 Make sure you have `yarn` installed. It is not necessary but the installation is a lot faster compared to `npm install`.
 
 ```
+docker pull ethereum/solc:0.4.24
 yarn install
+```
+
+### Running tests
+
+```
 # in one terminal run:
 npm run ganache
 # in another:
