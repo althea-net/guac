@@ -38,25 +38,17 @@ contract PaymentChannels is ECVerify, ETHWallet {
         require(block.number < _expiration);
     }
 
-    function channelDoesNotExist (bytes32 _channelId) internal view {
-        require(channels[_channelId].address0 == address(0));
+    function noChannelBetweenPair (
+      address _address0, address _address1
+    )
+      internal view
+    {
+      require(_address0 < _address1);
+      require(!channelBetweenPairs[_address0][_address1]);
     }
 
-    function noChannelBetweenPair (address _address0, address _address1) internal view {
-        require(_address0 < _address1);
-        require(!channelBetweenPairs[_address0][_address1]);
-    }
-
-    function channelExists (Channel _channel) internal pure {
-        require(_channel.address0 != address(0));
-    }
-
-    function channelSettlingPeriodStarted (Channel _channel) internal pure {
-        require(_channel.settlingPeriodStarted);
-    }
-
-    function channelSettlingPeriodNotStarted (Channel _channel) internal pure {
-        require(!_channel.settlingPeriodStarted);
+    function channelExists (address _a) internal pure {
+        require(_a != address(0));
     }
 
     function channelIsSettled (Channel _channel) internal view {
@@ -75,12 +67,18 @@ contract PaymentChannels is ECVerify, ETHWallet {
         );
     }
 
-    function balancesEqualTotal (Channel _channel, uint256 _balance0, uint256 _balance1) internal view {
-        require(_balance0.add(_balance1) == _channel.totalBalance);
+    function balancesEqualTotal (
+      uint256 _total,
+      uint256 _balance0,
+      uint256 _balance1
+    ) internal view {
+        require(_balance0.add(_balance1) == _total);
     }
 
-    function sequenceNumberIsHighest (Channel _channel, uint256 _sequenceNumber) internal pure {
-        require(_sequenceNumber > _channel.sequenceNumber);
+    function sequenceNumberIsHighest (uint256 _channelSequenceNumber, uint256 _sequenceNumber)
+      internal pure 
+    {
+        require(_sequenceNumber > _channelSequenceNumber);
     }
 
     function signedBy (
@@ -199,11 +197,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
         channelBetweenPairs[_address0][_address1] = true;
 
-        ChannelOpened(
-            _address0,
-            _address1,
-            channelId
-        );
+        ChannelOpened(_address0, _address1, channelId);
 
         decrementBalance(_address0, _balance0);
         decrementBalance(_address1, _balance1);
@@ -226,10 +220,10 @@ contract PaymentChannels is ECVerify, ETHWallet {
         bytes _signature1
     ) public {
         Channel storage channel = channels[_channelId];
-        channelExists(channel);
+        channelExists(channel.address0);
         channelIsNotSettled(channel);
-        sequenceNumberIsHighest(channel, _sequenceNumber);
-        balancesEqualTotal(channel, _balance0, _balance1);
+        sequenceNumberIsHighest(channel.sequenceNumber, _sequenceNumber);
+        balancesEqualTotal(channel.totalBalance, _balance0, _balance1);
 
         bytes32 fingerprint = keccak256(
           abi.encodePacked(
@@ -279,7 +273,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         bytes _bountySignature
     ) public {
         Channel memory channel = channels[_channelId];
-        channelSettlingPeriodStarted(channel);
+        require(channel.settlingPeriodStarted);
 
         bytes32 fingerprint = keccak256(
           abi.encodePacked(
@@ -303,10 +297,8 @@ contract PaymentChannels is ECVerify, ETHWallet {
         updateState(
             _channelId,
             _sequenceNumber,
-
             _balance0,
             _balance1,
-
             _signature0,
             _signature1
         );
@@ -330,9 +322,9 @@ contract PaymentChannels is ECVerify, ETHWallet {
     ) public {
         Channel storage channel = channels[_channelId];
 
-        channelExists(channel);
-        sequenceNumberIsHighest(channel, _sequenceNumber);
-        balancesEqualTotal(channel, _balance0, _balance1);
+        channelExists(channel.address0);
+        sequenceNumberIsHighest(channel.sequenceNumber, _sequenceNumber);
+        balancesEqualTotal(channel.totalBalance, _balance0, _balance1);
 
         bytes32 fingerprint = keccak256(
           abi.encodePacked(
@@ -373,8 +365,8 @@ contract PaymentChannels is ECVerify, ETHWallet {
         bytes _signature
     ) public {
         Channel storage channel = channels[_channelId];
-        channelExists(channel);
-        channelSettlingPeriodNotStarted(channel);
+        channelExists(channel.address0);
+        require(!channel.settlingPeriodStarted);
 
         bytes32 fingerprint = keccak256(
           abi.encodePacked(
@@ -408,7 +400,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
     ) public {
         Channel storage channel = channels[_channelId];
 
-        channelExists(channel);
+        channelExists(channel.address0);
         channelIsSettled(channel);
 
         incrementBalance(channel.address0, channel.balance0);
@@ -430,26 +422,21 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
     function reDraw (
         bytes32 _channelId,
-
         uint256 _sequenceNumber,
         uint256 _oldBalance0,
         uint256 _oldBalance1,
-
         uint256 _newBalance0,
         uint256 _newBalance1,
-
         uint256 _expiration,
-
         bytes _signature0,
         bytes _signature1
     ) public {
         Channel storage channel = channels[_channelId];
 
-        channelExists(channel);
-        sequenceNumberIsHighest(channel, _sequenceNumber);
-        balancesEqualTotal(channel, _oldBalance0, _oldBalance1);
+        channelExists(channel.address0);
+        sequenceNumberIsHighest(channel.sequenceNumber, _sequenceNumber);
+        balancesEqualTotal(channel.totalBalance, _oldBalance0, _oldBalance1);
         txNotExpired(_expiration);
-
 
         bytes32 fingerprint = keccak256(
           abi.encodePacked(
@@ -483,7 +470,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         channel.balance1 = _newBalance1;
 
         ChannelReDrawn(
-            _channelId
+          _channelId
         );
 
         incrementBalance(channel.address0, _oldBalance0);
