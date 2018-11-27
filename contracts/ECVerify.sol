@@ -49,6 +49,5 @@ contract ECVerify {
     
     function ecverify(bytes32 hash, bytes sig, address signer) returns (bool b) {
         b = ecrecovery(hash, sig) == signer;
-        return b;
     }
 }
