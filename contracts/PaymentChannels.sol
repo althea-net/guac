@@ -197,7 +197,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
         channelBetweenPairs[_address0][_address1] = true;
 
-        ChannelOpened(_address0, _address1, channelId);
+        emit ChannelOpened(_address0, _address1, channelId);
 
         decrementBalance(_address0, _balance0);
         decrementBalance(_address1, _balance1);
@@ -386,10 +386,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         channel.settlingPeriodStarted = true;
         channel.settlingPeriodEnd = block.number + channel.settlingPeriodLength;
 
-        SettlingStarted(
-            _channelId,
-            channel.sequenceNumber
-        );
+        emit SettlingStarted(_channelId, channel.sequenceNumber);
     }
 
     /// @dev Close the channel after a settling period has been started and has ended, transfering the balances in the last updateState tx back to the participants. This is only used in a contentious closing, where startSettlingPeriod has already been called.
@@ -469,9 +466,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         channel.balance0 = _newBalance0;
         channel.balance1 = _newBalance1;
 
-        ChannelReDrawn(
-          _channelId
-        );
+        emit ChannelReDrawn(_channelId);
 
         incrementBalance(channel.address0, _oldBalance0);
         incrementBalance(channel.address1, _oldBalance1);
