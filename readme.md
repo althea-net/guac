@@ -1,3 +1,28 @@
+# Guac
+
+This repo contains the payment channel contracts of Althea.
+
+
+### Setup
+
+Make sure you have `yarn` installed. It is not necessary but the installation is a lot faster compared to `npm install`.
+
+```
+yarn install
+```
+
+### Running tests
+
+```
+# in one terminal run:
+npm run ganache
+# in another:
+npm run test
+```
+
+
+### Contract documentation 
+
 * [ECVerify](#ecverify)
   * [ecverify](#function-ecverify)
   * [ecrecovery](#function-ecrecovery)

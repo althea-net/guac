@@ -24,6 +24,7 @@
     "artifacts": true,
     "contract": true,
     "web3": true,
-    "Promise": true
+    "Promise": true,
+    "assert": true
   }
 }

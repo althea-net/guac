@@ -1,84 +1,66 @@
-// cook mango twist then skin sort option civil have still rather guilt
-
-const test = require("blue-tape");
-const p = require("util").promisify;
-
-const {
-  ACCT_0_PRIVKEY,
-  ACCT_0_ADDR,
-  ACCT_1_PRIVKEY,
-  ACCT_1_ADDR,
-  ACCT_2_PRIVKEY,
-  ACCT_2_ADDR
-} = require("./constants.js");
+const PaymentChannels = artifacts.require("PaymentChannels.sol")
+const {reverting } = require("./helpers/shouldFail.js")
+const {ACCT_A} = require("./constants.js");
 
 const {
-  filterLogs,
-  takeSnapshot,
   revertSnapshot,
+  takeSnapshot,
   solSha3,
   sign,
-  mineBlocks,
   createChannel,
   updateState,
   startSettlingPeriod
 } = require("./utils.js");
 
-module.exports = async (test, instance) => {
-  // startSettlingPeriod happy path is tested in updateState.js
-  test("startSettlingPeriod nonexistant channel", async t => {
-    const snapshot = await takeSnapshot();
+module.exports = context("Start settling period", async () => {
 
+  let instance, snapshotId
+  before(async () => {
+    instance = await PaymentChannels.new()
+  })
+  beforeEach(async () => {
+    snapshotId = await takeSnapshot()
+  })
+  afterEach(async () => {
+    await revertSnapshot(snapshotId)
+  })
+  // startSettlingPeriod happy path is tested in updateState.js
+  it("startSettlingPeriod nonexistant channel", async () => {
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
-
     await updateState(instance, channelId, 1, 5, 7);
-
-    await t.shouldFail(
+    await reverting(
       startSettlingPeriod(
         instance,
         "0x2000000000000000000000000000000000000000000000000000000000000000"
       )
     );
-
-    await revertSnapshot(snapshot);
   });
 
-  test("startSettlingPeriod already started", async t => {
-    const snapshot = await takeSnapshot();
-
+  it("startSettlingPeriod already started", async () => {
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
     await updateState(instance, channelId, 1, 5, 7);
-
     await startSettlingPeriod(instance, channelId);
-
-    await t.shouldFail(startSettlingPeriod(instance, channelId));
-
-    await revertSnapshot(snapshot);
+    await reverting(startSettlingPeriod(instance, channelId));
   });
 
-  test("startSettlingPeriod bad sig", async t => {
-    const snapshot = await takeSnapshot();
-
+  it("startSettlingPeriod bad sig", async () => {
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
 
     const startSettlingPeriodFingerprint = solSha3(
       "startSettlingPeriod derp",
-      instance.contract.address,
+      instance.address,
       channelId
     );
 
     await updateState(instance, channelId, 1, 5, 7);
-
-    await t.shouldFail(
+    await reverting(
       instance.startSettlingPeriod(
         channelId,
-        sign(startSettlingPeriodFingerprint, new Buffer(ACCT_0_PRIVKEY, "hex"))
+        sign(startSettlingPeriodFingerprint, ACCT_A)
       )
     );
-
-    await revertSnapshot(snapshot);
   });
-};
+})

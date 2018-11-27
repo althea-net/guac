@@ -15,7 +15,6 @@ install:
   - yarn install
 
 script:
-  - npm run testrpc > /dev/null &
+  - npm run ganache > /dev/null &
   - sleep 5
-  - npm run migrate
   - npm run test
