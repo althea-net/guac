@@ -70,7 +70,7 @@ async function createChannel(
   balance1,
   settlingPeriod,
   string = "newChannel",
-  expiration = false
+  expiration
 ) {
 
   if(!expiration) {
@@ -163,7 +163,7 @@ async function reDraw(
   oldBalance1,
   newBalance0,
   newBalance1,
-  expiration = false
+  expiration
 ) {
 
   if(!expiration) {
