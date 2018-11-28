@@ -1,6 +1,6 @@
-const PaymentChannels = artifacts.require("PaymentChannels.sol")
-const {throwing, reverting } = require("./helpers/shouldFail.js")
-const {ACCT_A, ACCT_B, ZERO} = require("./constants.js");
+const PaymentChannels = artifacts.require("PaymentChannels.sol");
+const { throwing, reverting } = require("./helpers/shouldFail.js");
+const { ACCT_A, ACCT_B, ZERO } = require("./constants.js");
 
 const {
   takeSnapshot,
@@ -8,29 +8,28 @@ const {
   reDraw,
   createChannel,
   updateState,
-	finalAsserts,
-  provider,
+  finalAsserts,
+  provider
 } = require("./utils.js");
 
 module.exports = context("Redraw", async () => {
-	let instance, snapshotId
-	before(async () => {
-		instance = await PaymentChannels.new()
-	})
-	beforeEach(async () => {
-		snapshotId = await takeSnapshot()
-	})
-	afterEach(async () => {
-		await revertSnapshot(snapshotId)
-	})
+  let instance, snapshotId;
+  before(async () => {
+    instance = await PaymentChannels.new();
+  });
+  beforeEach(async () => {
+    snapshotId = await takeSnapshot();
+  });
+  afterEach(async () => {
+    await revertSnapshot(snapshotId);
+  });
 
-  it("reDraw happy path", async () => {
-
+  it.only("reDraw happy path", async () => {
     // create channel with 6, 6 (both parties have 12 to start)
     const tx = await createChannel(instance, 6, 6, 2);
     const channelId = tx.logs[0].args._channelId;
-    assert.equal((
-      await instance.balanceOf.call(ACCT_A.address)).toString(),
+    assert.equal(
+      (await instance.balanceOf.call(ACCT_A.address)).toString(),
       "6"
     );
     assert.equal(
@@ -59,8 +58,8 @@ module.exports = context("Redraw", async () => {
       totalBalance: "6",
       balance0: "5",
       balance1: "1",
-      sequenceNumber: "1",
-    })
+      sequenceNumber: "1"
+    });
   });
 
   it("reDraw oldBalance higher than total", async () => {
@@ -110,7 +109,7 @@ module.exports = context("Redraw", async () => {
       reDraw(
         instance,
         "0x1000000000000000000000000000000000000000000000000000000000000000",
-				1,
+        1,
         5,
         7,
         5,
@@ -122,4 +121,4 @@ module.exports = context("Redraw", async () => {
     const channelId = tx.logs[0].args._channelId;
     await reDraw(instance, channelId, 1, 5, 7, 5, 1);
   });
-})
+});

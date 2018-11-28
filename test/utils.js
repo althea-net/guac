@@ -1,13 +1,10 @@
-const { joinSignature } = require("ethers").utils
-const {ethers} = require("ethers")
+const { joinSignature } = require("ethers").utils;
+const { ethers } = require("ethers");
 
-const {
-  ACCT_A,
-  ACCT_B,
-} = require("./constants.js");
+const { ACCT_A, ACCT_B } = require("./constants.js");
 
 const provider = new ethers.providers.Web3Provider(web3.currentProvider);
-const solSha3 = web3.utils.soliditySha3
+const solSha3 = web3.utils.soliditySha3;
 
 module.exports = {
   provider,
@@ -33,18 +30,15 @@ function sleep(time) {
 }
 
 async function takeSnapshot() {
-  return await provider.send(`evm_snapshot`)
+  return await provider.send(`evm_snapshot`);
 }
 
 async function revertSnapshot(snapshotId) {
-  await provider.send(
-    "evm_revert",
-    [snapshotId]
-  )
+  await provider.send("evm_revert", [snapshotId]);
 }
 
 async function mineBlock() {
-  await provider.send("evm_mine")
+  await provider.send("evm_mine");
 }
 
 async function mineBlocks(count) {
@@ -56,7 +50,7 @@ async function mineBlocks(count) {
 }
 
 function sign(fingerprint, signer) {
-  return joinSignature(signer.signDigest(fingerprint))
+  return joinSignature(signer.signDigest(fingerprint));
 }
 
 function filterLogs(logs) {
@@ -72,9 +66,8 @@ async function createChannel(
   string = "newChannel",
   expiration = false
 ) {
-
-  if(!expiration) {
-    expiration = await provider.getBlockNumber() + 5
+  if (!expiration) {
+    expiration = (await provider.getBlockNumber()) + 5;
   }
   await instance.depositToAddress(ACCT_A.address, { value: 12 });
   await instance.depositToAddress(ACCT_B.address, { value: 12 });
@@ -112,7 +105,6 @@ async function updateState(
   balance0,
   balance1
 ) {
-
   const fingerprint = solSha3(
     "updateState",
     instance.address,
@@ -120,7 +112,7 @@ async function updateState(
     sequenceNumber,
     balance0,
     balance1
-  )
+  );
 
   const signature0 = sign(fingerprint, ACCT_A);
   const signature1 = sign(fingerprint, ACCT_B);
@@ -136,15 +128,13 @@ async function updateState(
 }
 
 async function startSettlingPeriod(instance, channelId) {
-
   const fingerprint = solSha3(
-    "startSettlingPeriod", instance.address, channelId
-  )
+    "startSettlingPeriod",
+    instance.address,
+    channelId
+  );
 
-  return instance.startSettlingPeriod(
-    channelId,
-    sign(fingerprint, ACCT_A)
-  )
+  return instance.startSettlingPeriod(channelId, sign(fingerprint, ACCT_A));
 }
 
 async function closeChannel(instance, channelId, balance0 = 5, balance1 = 7) {
@@ -165,10 +155,12 @@ async function reDraw(
   newBalance1,
   expiration = false
 ) {
-
-  if(!expiration) {
-    expiration = await provider.getBlockNumber() + 5
+  if (!expiration) {
+    expiration = (await provider.getBlockNumber()) + 5;
   }
+
+  const settlingPeriodLength = 5;
+
   const fingerprint = solSha3(
     "reDraw",
     instance.address,
@@ -178,68 +170,70 @@ async function reDraw(
     oldBalance1,
     newBalance0,
     newBalance1,
-    expiration
-  )
+    expiration,
+    settlingPeriodLength
+  );
 
   const signature0 = sign(fingerprint, ACCT_A);
   const signature1 = sign(fingerprint, ACCT_B);
 
   return instance.reDraw(
     channelId,
+    ACCT_A.address,
+    ACCT_B.address,
     sequenceNumber,
     oldBalance0,
     oldBalance1,
     newBalance0,
     newBalance1,
     expiration,
+    settlingPeriodLength,
     signature0,
     signature1
   );
 }
 
-async function finalAsserts(
-  {
-    instance,
-    channelId,
-    addres0 = ACCT_A.address,
-    addres1 = ACCT_B.address,
-    totalBalance = "12",
-    balance0 = "6",
-    balance1 = "6",
-    sequenceNumber = "0",
-    settlingPeriodLength = "2",
-    settlingPeriodStarted = false,
-    settlingPeriodEnd = "0"
-  }
-) {
-  let values = await instance.channels(channelId)
-  assert.equal(addres0, values.address0, "Address 0 not equal")
-  assert.equal(addres1, values.address1, "Address 1 not equal")
+async function finalAsserts({
+  instance,
+  channelId,
+  addres0 = ACCT_A.address,
+  addres1 = ACCT_B.address,
+  totalBalance = "12",
+  balance0 = "6",
+  balance1 = "6",
+  sequenceNumber = "0",
+  settlingPeriodLength = "2",
+  settlingPeriodStarted = false,
+  settlingPeriodEnd = "0"
+}) {
+  let values = await instance.channels(channelId);
+  assert.equal(addres0, values.address0, "Address 0 not equal");
+  assert.equal(addres1, values.address1, "Address 1 not equal");
   assert.equal(
     totalBalance,
     values.totalBalance.toString(),
     "Total balance not equal"
-  )
-  assert.equal(balance0, values.balance0.toString(), "Balance 0 not equal")
-  assert.equal(balance1, values.balance1.toString(), "Balance 1 not equal")
+  );
+  assert.equal(balance0, values.balance0.toString(), "Balance 0 not equal");
+  assert.equal(balance1, values.balance1.toString(), "Balance 1 not equal");
   assert.equal(
     sequenceNumber,
     values.sequenceNumber.toString(),
     "Sequence number not equal"
-  )
+  );
   assert.equal(
     settlingPeriodLength,
     values.settlingPeriodLength.toString(),
     "Settling period length not equal"
-  )
+  );
   assert.equal(
     settlingPeriodStarted,
     values.settlingPeriodStarted,
     "Settling period started not equal"
-  )
+  );
   assert.equal(
     settlingPeriodEnd,
     values.settlingPeriodEnd.toString(),
     "Settling period end not equal"
-  )
+  );
 }

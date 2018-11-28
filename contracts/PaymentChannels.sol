@@ -28,7 +28,9 @@ contract PaymentChannels is ECVerify, ETHWallet {
     );
 
     event ChannelReDrawn(
-        bytes32 indexed _channelId
+        address indexed address0,
+        address indexed address1,
+        bytes32 _channelId
     );
 
     mapping (bytes32 => Channel) public channels;
@@ -40,6 +42,10 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
     function channelDoesNotExist (bytes32 _channelId) internal view {
         require(channels[_channelId].address0 == address(0));
+    }
+
+    function addressesAreSorted (address _address0, address _address1) internal view {
+        require(_address0 < _address1);
     }
 
     function noChannelBetweenPair (address _address0, address _address1) internal view {
@@ -335,14 +341,14 @@ contract PaymentChannels is ECVerify, ETHWallet {
         balancesEqualTotal(channel, _balance0, _balance1);
 
         bytes32 fingerprint = keccak256(
-          abi.encodePacked(
-            "closeChannelFast",
-            address(this),
-            _channelId,
-            _sequenceNumber,
-            _balance0,
-            _balance1
-          )
+            abi.encodePacked(
+                "closeChannelFast",
+                address(this),
+                _channelId,
+                _sequenceNumber,
+                _balance0,
+                _balance1
+            )
         );
 
         signedByBoth(
@@ -419,7 +425,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
     }
 
     /// @dev Refill or withdraw money from a channel which is currently open. This is equivalent to both participants signing and sumbitting a closeChannelFast tx followed by a newChannel tx, except that the channelId, the settlingPeriod, and the current sequenceNumber do not change. This logs a ChannelReDrawn event containing the channelId
-    /// @param _channelId The Id of the channel to ReDraw.
+    /// @param _oldChannelId The Id of the channel to ReDraw.
     /// @param _sequenceNumber The channel's current sequenceNumber.
     /// @param _oldBalance0 The balance of address0.
     /// @param _oldBalance1 The balance of address1.These balances must add up to the channel's totalBalance, and will be sent to address0 and address1 when this tx is submitted.
@@ -429,7 +435,10 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
 
     function reDraw (
-        bytes32 _channelId,
+        bytes32 _oldChannelId,
+
+        address _address0,
+        address _address1,
 
         uint256 _sequenceNumber,
         uint256 _oldBalance0,
@@ -439,56 +448,89 @@ contract PaymentChannels is ECVerify, ETHWallet {
         uint256 _newBalance1,
 
         uint256 _expiration,
+        uint256 _settlingPeriodLength,
 
         bytes _signature0,
         bytes _signature1
     ) public {
-        Channel storage channel = channels[_channelId];
-
-        channelExists(channel);
-        sequenceNumberIsHighest(channel, _sequenceNumber);
-        balancesEqualTotal(channel, _oldBalance0, _oldBalance1);
+        addressesAreSorted(_address0, _address1);
         txNotExpired(_expiration);
+        Channel storage channel = channels[_oldChannelId];
 
-
-        bytes32 fingerprint = keccak256(
-          abi.encodePacked(
-            "reDraw",
-            address(this),
-            _channelId,
-
-            _sequenceNumber,
-            _oldBalance0,
-            _oldBalance1,
-
-            _newBalance0,
-            _newBalance1,
-
-            _expiration
-          )
-        );
+        require(_address0 == channel.address0);
+        require(_address1 == channel.address1);
 
         signedByBoth(
-            fingerprint,
+            keccak256(
+                abi.encodePacked(
+                    "reDraw",
+                    address(this),
+                    _oldChannelId,
+
+                    _sequenceNumber,
+                    _oldBalance0,
+                    _oldBalance1,
+
+                    _newBalance0,
+                    _newBalance1,
+
+                    _expiration,
+                    _settlingPeriodLength
+                )
+            ),
             _signature0,
             _signature1,
             channel.address0,
             channel.address1
         );
 
-        channel.sequenceNumber = _sequenceNumber;
+        // If the channel has been opened already
+        // These are basically the internals of closeChannelFast
+        if (channel.address0 != address(0)) {
+            sequenceNumberIsHighest(channel, _sequenceNumber);
+            balancesEqualTotal(channel, _oldBalance0, _oldBalance1);
 
-        channel.totalBalance = _newBalance0.add(_newBalance1);
-        channel.balance0 = _newBalance0;
-        channel.balance1 = _newBalance1;
+            delete channelBetweenPairs[channel.address0][channel.address1];
+            delete channels[_oldChannelId];
 
-        ChannelReDrawn(
-            _channelId
+            incrementBalance(channel.address0, _oldBalance0);
+            incrementBalance(channel.address1, _oldBalance1);
+        }
+
+        // Open a new channel
+        // These are basically the internals of newChannel
+        bytes32 channelId = keccak256( 
+            abi.encodePacked(
+                block.number,
+                address(this),
+                _address0,
+                _address1
+            )
         );
 
-        incrementBalance(channel.address0, _oldBalance0);
-        incrementBalance(channel.address1, _oldBalance1);
-        decrementBalance(channel.address0, _newBalance0);
-        decrementBalance(channel.address1, _newBalance1);
+        channels[channelId] = Channel(
+            _address0,                          // address address0;
+            _address1,                          // address address1;
+            _newBalance0.add(_newBalance1),     // uint256 totalBalance;
+
+            _newBalance0,                       // uint256 balance0;
+            _newBalance1,                       // uint256 balance1;
+            0,                                  // uint256 sequenceNumber;
+
+            _settlingPeriodLength,              // uint256 settlingPeriodLength;
+            false,                              // bool settlingPeriodStarted;
+            0                                   // uint256 settlingPeriodEnd;
+        );
+
+        channelBetweenPairs[_address0][_address1] = true;
+
+        ChannelReDrawn(
+            _address0,
+            _address1,
+            channelId
+        );
+
+        decrementBalance(_address0, _newBalance0);
+        decrementBalance(_address1, _newBalance1);   
     }
 }
