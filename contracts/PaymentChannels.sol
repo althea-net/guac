@@ -35,34 +35,35 @@ contract PaymentChannels is ECVerify, ETHWallet {
     mapping (address => mapping (address => bool)) public channelBetweenPairs;
 
     function txNotExpired (uint256 _expiration) internal view {
-        require(block.number < _expiration);
+        require(block.number < _expiration, "tx is expired");
     }
 
     function channelDoesNotExist (bytes32 _channelId) internal view {
-        require(channels[_channelId].address0 == address(0));
+        require(channels[_channelId].address0 == address(0), "channel already exists");
     }
 
     function noChannelBetweenPair (address _address0, address _address1) internal view {
-        require(_address0 < _address1);
-        require(!channelBetweenPairs[_address0][_address1]);
+        require(_address0 < _address1, "address0 must be lower than address1");
+        require(!channelBetweenPairs[_address0][_address1], "there is already a channel between these addresses");
     }
 
     function channelExists (Channel _channel) internal pure {
-        require(_channel.address0 != address(0));
+        require(_channel.address0 != address(0), "channel does not exist");
     }
 
     function channelSettlingPeriodStarted (Channel _channel) internal pure {
-        require(_channel.settlingPeriodStarted);
+        require(_channel.settlingPeriodStarted, "channel settling period has not started");
     }
 
     function channelSettlingPeriodNotStarted (Channel _channel) internal pure {
-        require(!_channel.settlingPeriodStarted);
+        require(!_channel.settlingPeriodStarted, "channel settling period as started");
     }
 
     function channelIsSettled (Channel _channel) internal view {
         require(
             _channel.settlingPeriodStarted && // If the settling period has started
-            block.number >= _channel.settlingPeriodEnd // And ended
+            block.number >= _channel.settlingPeriodEnd, // And ended
+             "channel is not yet settled"
         );
     }
 
@@ -71,16 +72,17 @@ contract PaymentChannels is ECVerify, ETHWallet {
             !( // Negate the below
                 _channel.settlingPeriodStarted && // If the settling period is started
                 block.number >= _channel.settlingPeriodEnd // And ended
-            )
+                
+            ),  "channel is already settled"
         );
     }
 
     function balancesEqualTotal (Channel _channel, uint256 _balance0, uint256 _balance1) internal view {
-        require(_balance0.add(_balance1) == _channel.totalBalance);
+        require(_balance0.add(_balance1) == _channel.totalBalance,  "balances do not equal total");
     }
 
     function sequenceNumberIsHighest (Channel _channel, uint256 _sequenceNumber) internal pure {
-        require(_sequenceNumber > _channel.sequenceNumber);
+        require(_sequenceNumber > _channel.sequenceNumber,  "sequence number is not the highest");
     }
 
     function signedBy (
@@ -88,7 +90,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         bytes _signature,
         address _address
     ) internal {
-        require(ecverify(_fingerprint, _signature, _address));
+        require(ecverify(_fingerprint, _signature, _address),  "invalid signature");
     }
 
     function signedByBoth (
@@ -100,7 +102,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
     ) internal {
         require(
             ecverify(_fingerprint, _signature0, _address0) &&
-            ecverify(_fingerprint, _signature1, _address1)
+            ecverify(_fingerprint, _signature1, _address1),  "at least one signature invalid"
         );
     }
 
@@ -112,7 +114,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
     ) internal {
         require(
             ecverify(_fingerprint, _signature, _address0) ||
-            ecverify(_fingerprint, _signature, _address1)
+            ecverify(_fingerprint, _signature, _address1),  "both signatures invalid"
         );
     }
 
@@ -199,7 +201,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
 
         channelBetweenPairs[_address0][_address1] = true;
 
-        ChannelOpened(
+        emit ChannelOpened(
             _address0,
             _address1,
             channelId
@@ -394,7 +396,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         channel.settlingPeriodStarted = true;
         channel.settlingPeriodEnd = block.number + channel.settlingPeriodLength;
 
-        SettlingStarted(
+        emit SettlingStarted(
             _channelId,
             channel.sequenceNumber
         );
@@ -482,7 +484,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         channel.balance0 = _newBalance0;
         channel.balance1 = _newBalance1;
 
-        ChannelReDrawn(
+        emit ChannelReDrawn(
             _channelId
         );
 
