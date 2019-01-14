@@ -130,6 +130,103 @@ contract PaymentChannels is ECVerify, ETHWallet {
         ethBalances[_addr] = ethBalances[_addr].sub(_value);
     }
 
+    function depositThenNewChannel(
+        address _address0,
+        address _address1,
+
+        uint256 _balance0,
+        uint256 _balance1,
+
+        uint256 _expiration,
+        uint256 _settlingPeriodLength,
+
+        bytes _signature0,
+        bytes _signature1
+    )  public payable {
+        this.quickDeposit();
+        this.newChannel(
+            _address0,
+            _address1,
+
+            _balance0,
+            _balance1,
+
+            _expiration,
+            _settlingPeriodLength,
+
+            _signature0,
+            _signature1
+        );
+    }
+
+    function depositThenRedraw(
+        bytes32 _channelId,
+
+        uint256 _sequenceNumber,
+        uint256 _oldBalance0,
+        uint256 _oldBalance1,
+
+        uint256 _newBalance0,
+        uint256 _newBalance1,
+
+        uint256 _expiration,
+
+        bytes _signature0,
+        bytes _signature1
+    )  public payable {
+        this.quickDeposit();
+        this.reDraw (
+            _channelId,
+
+            _sequenceNumber,
+            _oldBalance0,
+            _oldBalance1,
+
+            _newBalance0,
+            _newBalance1,
+
+            _expiration,
+
+            _signature0,
+            _signature1
+        );
+    }
+
+    function redrawThenWithdraw(
+        uint256 _withdrawAmount,
+
+        bytes32 _channelId,
+
+        uint256 _sequenceNumber,
+        uint256 _oldBalance0,
+        uint256 _oldBalance1,
+
+        uint256 _newBalance0,
+        uint256 _newBalance1,
+
+        uint256 _expiration,
+
+        bytes _signature0,
+        bytes _signature1
+    )  public payable {
+        this.reDraw (
+            _channelId,
+
+            _sequenceNumber,
+            _oldBalance0,
+            _oldBalance1,
+
+            _newBalance0,
+            _newBalance1,
+
+            _expiration,
+
+            _signature0,
+            _signature1
+        );
+        this.withdraw(_withdrawAmount);
+    }
+
     /// @dev Create a new channel between two nodes. _address0 must be numerically smaller than _address1. This will generate a channelId which is used to make other transactions on this channel. It emits a ChannelOpened event which is indexed by _address0, _address1 and also contains the _channelId.
     /// @param _address0 The numerically lower address of one of the channel participants. 
     /// @param _address1 The numerically higher address of the other channel participant.
