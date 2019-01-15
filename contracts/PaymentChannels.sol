@@ -143,6 +143,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         bytes _signature0,
         bytes _signature1
     )  public payable {
+        require(msg.value != 0, "cannot deposit 0 #1");
         this.quickDeposit();
         this.newChannel(
             _address0,

@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "eth-gas-reporter": "^0.1.12",
+    "ethereum-tx-decoder": "^2.0.1",
     "ethers": "^4.0.12",
     "ganache-cli": "6.1.2",
     "truffle": "^5.0.0-beta.2"
