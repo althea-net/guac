@@ -7,13 +7,13 @@ contract ETHWallet {
     mapping (address => uint256) ethBalances;
 
     function quickDeposit () public payable {
-        require(msg.value != 0);
+        require(msg.value != 0, "cannot deposit 0");
         ethBalances[msg.sender] = ethBalances[msg.sender].add(msg.value);
     }
 
 
     function depositToAddress (address _address) public payable {
-        require(msg.value != 0 && _address != address(0));
+        require(msg.value != 0 && _address != address(0), "cannot deposit 0 or deposit to address(0)");
         ethBalances[_address] = ethBalances[_address].add(msg.value);
     }
 
