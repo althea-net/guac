@@ -19,6 +19,7 @@ contract ETHWallet {
 
 
     function withdraw (uint256 amount) public {
+        require(ethBalances[msg.sender] >= amount, "cannot withdraw more money than is in this account");
         ethBalances[msg.sender] = ethBalances[msg.sender].sub(amount);
         msg.sender.transfer(amount);
     }

@@ -143,7 +143,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         bytes _signature0,
         bytes _signature1
     )  public payable {
-        this.quickDeposit.value(msg.value)();
+        this.depositToAddress.value(msg.value)(msg.sender);
         this.newChannel(
             _address0,
             _address1,
@@ -174,7 +174,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
         bytes _signature0,
         bytes _signature1
     )  public payable {
-        this.quickDeposit.value(msg.value)();
+        this.depositToAddress.value(msg.value)(msg.sender);
         this.reDraw (
             _channelId,
 
@@ -213,6 +213,7 @@ contract PaymentChannels is ECVerify, ETHWallet {
             _channelId,
 
             _sequenceNumber,
+            
             _oldBalance0,
             _oldBalance1,
 
@@ -224,7 +225,12 @@ contract PaymentChannels is ECVerify, ETHWallet {
             _signature0,
             _signature1
         );
-        this.withdraw(_withdrawAmount);
+        
+        // For some reason we need to paste the code from withdraw in here to make it work
+        // I believe msg.sender is not staying intact across calls
+        require(ethBalances[msg.sender] >= _withdrawAmount, "cannot withdraw more money than is in this account");
+        ethBalances[msg.sender] = ethBalances[msg.sender].sub(_withdrawAmount);
+        msg.sender.transfer(_withdrawAmount);
     }
 
     /// @dev Create a new channel between two nodes. _address0 must be numerically smaller than _address1. This will generate a channelId which is used to make other transactions on this channel. It emits a ChannelOpened event which is indexed by _address0, _address1 and also contains the _channelId.
